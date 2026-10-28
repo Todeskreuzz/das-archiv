@@ -37,6 +37,7 @@ Kein Zeitlimit, keine Saison. Das hier ist ein Langzeitprojekt.
 | **Kurator läuft selbstständig durch das Haus** | fertig |
 | **Brücke: die KI lebt im Server, nicht im Browser** | fertig |
 | **Persona-Datei: der Kurator hat ein Gedächtnis** | fertig |
+| **Gesprächsverlauf überlebt Neustarts** | fertig |
 | **Scanner: durchsucht das Netz selbst** | fertig |
 | **Depot: alle Stücke als Kisten, dazu ein Katalog** | fertig |
 | **Notizen an jeder Wand** | fertig |
@@ -188,10 +189,13 @@ Prozess, kein Gedächtnis und keinen Ort, an dem sie auf Anfragen wartet. Was ge
 1. Die Brücke hält die Verbindung und schickt bei jeder Frage den Spielstand mit.
 2. `persona/curator.md` enthält Charakter, Wissen und Regeln. Diese Datei wird bei **jeder**
    Anfrage mitgeschickt. Sie ist das Gedächtnis, das ein Modell sonst nicht hat.
-3. Mit `ARCHIV_API_KEY` antwortet ein echtes Sprachmodell — in derselben Stimme, mit demselben
+3. `data/memory.json` speichert den Gesprächsverlauf auf dem Server. Beim Öffnen des Chats
+   lädt das Spiel die letzten Sätze — der Kurator erkennt Wiederholungen und nimmt den Faden auf,
+   auch nach einem Neustart.
+4. Mit `ARCHIV_API_KEY` antwortet ein echtes Sprachmodell — in derselben Stimme, mit demselben
    Gedächtnis, bei jeder Frage neu.
-4. Ohne Schlüssel antwortet die Brücke selbst mit derselben Persona. Der Unterschied ist die
-   Qualität, nicht die Figur.
+5. Ohne Schlüssel antwortet die Brücke selbst mit derselben Persona und demselben Verlauf.
+   Der Unterschied ist die Qualität, nicht die Figur.
 
 **Kostenlos:** Ein lokales Modell über Ollama oder LM Studio. `ARCHIV_BASE_URL=http://localhost:11434/v1`
 und `ARCHIV_MODEL=llama3.1` — dann läuft alles auf deinem Rechner, ohne Rechnung.

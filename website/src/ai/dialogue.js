@@ -49,8 +49,23 @@ export function greeting(ctx) {
 export function reply(message, ctx) {
   const text = normalize(message);
   const { entries, pending, state, total, secured } = ctx;
+  const history = Array.isArray(ctx.history) ? ctx.history : [];
 
   if (!text) return { text: 'Ich höre.' };
+
+  const lastUser = [...history].reverse().find((turn) => turn.role === 'user');
+  if (lastUser && normalize(lastUser.text) === text && !/^(hallo|hi|hey|moin|servus)/.test(text)) {
+    return {
+      text: pick(
+        [
+          'Das hast du gerade schon gefragt. Ich weiß es noch — die Antwort bleibt dieselbe.',
+          'Zweimal dieselbe Frage. Ich nehme das als Interesse, nicht als Zweifel.',
+          'Ich habe es mir gemerkt. Es ist noch genau so, wie ich es eben gesagt habe.',
+        ],
+        text + history.length,
+      ),
+    };
+  }
 
   if (/^(hallo|hi|hey|moin|servus|guten tag|guten abend|tag|na)\b/.test(text)) {
     return { text: greeting(ctx) };

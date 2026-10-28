@@ -23,6 +23,12 @@ const WAYPOINTS = [
   { x: 7.0, z: -16.6, room: 'tunnel', pause: 3.0 },
   { x: 7.0, z: -22.0, room: 'tunnel', pause: 5.0 },
   { x: 7.0, z: -29.4, room: 'tunnel', pause: 6.0 },
+  { x: 10.4, z: -30.2, room: 'tunnel', pause: 1.2 },
+  { x: 14.6, z: -30.0, room: 'depot', pause: 3.0 },
+  { x: 18.4, z: -26.0, room: 'depot', pause: 5.0 },
+  { x: 22.0, z: -31.0, room: 'depot', pause: 5.0 },
+  { x: 14.6, z: -30.0, room: 'depot', pause: 2.0 },
+  { x: 10.4, z: -30.2, room: 'tunnel', pause: 1.0 },
   { x: 7.0, z: -22.0, room: 'tunnel', pause: 2.0 },
   { x: 7.0, z: -16.6, room: 'tunnel', pause: 2.0 },
   { x: 0, z: -9.4, room: 'bibliothek', pause: 1.0 },
@@ -43,6 +49,7 @@ const LOCAL_THOUGHTS = [
   (ctx) => `Beim Gremium liegen ${ctx.pending} Vorgänge. Ich sehe sie alle.`,
   (ctx) => `${ctx.total} Stücke im Haus. Ich kenne jede Signatur auswendig.`,
   () => 'Der Tunnel ist kalt. Da unten bin ich am ehrlichsten.',
+  () => 'Im Depot stehen die Kisten nach Raum sortiert. Ordnung ist eine Form von Fürsorge.',
 ];
 
 export function createAgent({ curator, onThink, onFind, getContext }) {

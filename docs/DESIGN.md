@@ -546,3 +546,24 @@ Beim Laden werden alle Notizen aus `graffiti.json` an ihren Koordinaten wieder a
 `persona/curator.md` wird beim Start gelesen und bei **jeder** Anfrage an das Modell
 mitgeschickt: Charakter, Sprechweise, Wissen über das Haus, Projektgeschichte, Grenzen.
 Das ist der Unterschied zwischen „ein Modell antwortet" und „der Kurator antwortet".
+
+---
+
+## 23. Das Gedächtnis
+
+`scripts/memory.mjs`, gespeichert in `data/memory.json`.
+
+| Eigenschaft | Wert |
+| --- | --- |
+| Inhalt | Rollen `user` / `curator` mit Text und Zeitstempel |
+| Grenze | 80 Turns, älteste fallen zuerst heraus |
+| Übergabe (live) | die letzten 8 Turns als Teil des Prompts |
+| Übergabe (lokal) | die letzten 6 Turns an `reply()` |
+| Anzeige | `GET /brain/history`, geladen beim Öffnen des Chats |
+
+Beim Öffnen des Gesprächsfensters holt der Client den Verlauf und zeigt ihn an.
+Der Kurator erkennt eine doppelte Frage und sagt es. Im Live-Modus bekommt das
+Modell den Verlauf als Text mit — damit es nicht jede Sitzung neu anfängt.
+
+Das Gedächtnis liegt auf dem Server, nicht im Browser. Ein gelöschter Browser-Speicher
+löscht nur den eigenen Stand, nicht das, was der Kurator behalten hat.

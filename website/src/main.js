@@ -321,7 +321,7 @@ const chat = createChat({
   },
 });
 
-function openChat() {
+async function openChat() {
   if (mode === 'chat') return;
   if (hud.isOpen) {
     suppressResume = true;
@@ -337,8 +337,24 @@ function openChat() {
   world.curator.setSpeaking(1);
   hud.say('Ich höre.', 'SPRICHT');
   chat.show();
+
   if (!chat.hasHistory()) {
-    chat.add('curator', curatorGreeting(chatContext()));
+    let turns = [];
+    try {
+      const response = await fetch('/brain/history', { cache: 'no-store' });
+      if (response.ok) turns = (await response.json()).turns || [];
+    } catch {
+      turns = [];
+    }
+
+    if (turns.length) {
+      for (const turn of turns.slice(-8)) {
+        chat.add(turn.role === 'user' ? 'player' : 'curator', turn.text);
+      }
+      chat.add('curator', 'Wir haben zuletzt gesprochen. Ich habe nichts davon vergessen.');
+    } else {
+      chat.add('curator', curatorGreeting(chatContext()));
+    }
     chat.setSuggestions(SUGGESTIONS);
   }
 }

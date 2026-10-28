@@ -315,6 +315,7 @@ export function connectionPanel(status = {}) {
       <div><span class="row__label">Zustand</span><span class="row__value">${label}</span></div>
       <div><span class="row__label">Modell</span><span class="row__value">${esc(status.model || '—')}</span></div>
       <div><span class="row__label">Brücke</span><span class="row__value">localhost:4780</span></div>
+      <div><span class="row__label">Gedächtnis</span><span class="row__value">${Number(status.memory) || 0} Sätze</span></div>
     </div>
 
     ${

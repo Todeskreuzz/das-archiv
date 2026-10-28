@@ -152,6 +152,21 @@ test('Unbekanntes wird eingeräumt, nicht erfunden', () => {
   assert.equal(answer.action, undefined);
 });
 
+test('Eine doppelte Frage wird als solche erkannt', () => {
+  const history = [
+    { role: 'user', text: 'Wer bist du?' },
+    { role: 'curator', text: 'Ich bin der Kurator.' },
+  ];
+  const answer = reply('Wer bist du?', { ...ctx, history });
+  assert.match(answer.text, /gerade schon|Zweimal|gemerkt/);
+});
+
+test('Eine neue Frage wird nicht als Wiederholung behandelt', () => {
+  const history = [{ role: 'user', text: 'Wer bist du?' }];
+  const answer = reply('Was liegt beim Gremium?', { ...ctx, history });
+  assert.doesNotMatch(answer.text, /gerade schon/);
+});
+
 /* --------------------------------------------------------------- Bestand */
 
 test('Bestand ist konsistent', () => {

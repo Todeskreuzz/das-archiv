@@ -7,6 +7,7 @@ import { reply as localReply, greeting as localGreeting, SUGGESTIONS } from '../
 import { RESEARCH_POOL } from '../src/ai/research.js';
 import { createScout } from './scout.mjs';
 import { loadEnv, loadProviders, listProviders, detectProvider, chat } from './providers.mjs';
+import { loadMemory, saveMemory, remember, recent, transcript, countTurns } from './memory.mjs';
 
 /**
  * Die Brücke.
@@ -28,6 +29,7 @@ const ENV = { ...loadEnv(), ...process.env };
 const PROVIDERS = loadProviders();
 const provider = detectProvider(ENV, PROVIDERS);
 const mode = provider ? 'live' : 'local';
+const memory = loadMemory();
 
 /* ------------------------------------------------------------------ Zustand */
 
@@ -259,6 +261,7 @@ const server = createServer(async (req, res) => {
       provider: provider?.id || null,
       model: provider?.model || 'lokal',
       clients: clients.size,
+      memory: countTurns(memory),
       providers: listProviders(ENV, PROVIDERS).map((entry) => ({
         id: entry.id,
         label: entry.label,
@@ -300,16 +303,26 @@ const server = createServer(async (req, res) => {
 
     if (mode === 'live') {
       try {
+        const history = transcript(memory, 8);
         const result = await askModel([
           { role: 'system', content: SYSTEM },
           {
             role: 'user',
-            content: `${sessionLine()}\n\nDie Person sagt: "${message}"\n\nAntworte als Kurator.`,
+            content:
+              `${sessionLine()}\n\n` +
+              (history ? `Bisheriges Gespraech:\n${history}\n\n` : '') +
+              `Die Person sagt: "${message}"\n\nAntworte als Kurator.`,
           },
         ]);
         if (result.go) broadcast({ type: 'go', target: result.go });
         if (result.thought) broadcast({ type: 'thought', text: result.thought });
-        json(res, 200, { text: String(result.say || '�?�'), action: null });
+
+        const answerText = String(result.say || 'Ich habe keine Antwort.');
+        remember(memory, 'user', message);
+        remember(memory, 'curator', answerText);
+        saveMemory(memory);
+
+        json(res, 200, { text: answerText, action: null });
         return;
       } catch (error) {
         json(res, 200, {
@@ -327,13 +340,24 @@ const server = createServer(async (req, res) => {
       total: context.total || 0,
       secured: context.secured || 0,
       lastFind: null,
+      history: recent(memory, 6),
     });
+
+    remember(memory, 'user', message);
+    remember(memory, 'curator', answer.text);
+    saveMemory(memory);
+
     json(res, 200, { text: answer.text, action: answer.action || null });
     return;
   }
 
   if (path === '/brain/suggestions') {
     json(res, 200, { suggestions: SUGGESTIONS });
+    return;
+  }
+
+  if (path === '/brain/history') {
+    json(res, 200, { turns: recent(memory, 12) });
     return;
   }
 
