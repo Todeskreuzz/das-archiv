@@ -425,6 +425,17 @@ function placeNote() {
   openWall(id, { id, title: 'Notiz', room: 'Haus' });
 }
 
+async function openConnection() {
+  let status = { mode: 'offline' };
+  try {
+    const response = await fetch('/brain/status', { cache: 'no-store' });
+    if (response.ok) status = await response.json();
+  } catch {
+    status = { mode: 'offline' };
+  }
+  openPanel(connectionPanel(status));
+}
+
 menu.onAction((action) => {
   if (action === 'close') return enterWorld();
   if (action === 'ballot') return openPanel(ballotPanel());
@@ -434,7 +445,7 @@ menu.onAction((action) => {
   if (action === 'about') return openPanel(aboutPanel());
   if (action === 'anon') return openPanel(anonPanel());
   if (action === 'account') return openPanel(accountPanel());
-  if (action === 'verbindung') return openPanel(connectionPanel(link?.status || { mode: 'offline' }));
+  if (action === 'verbindung') return openConnection();
   return undefined;
 });
 

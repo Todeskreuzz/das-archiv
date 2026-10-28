@@ -74,20 +74,42 @@ $env:ARCHIV_BASE_URL = "https://api.openai.com/v1"
 node scripts/bridge.mjs
 ```
 
-**Komplett kostenlose Cloud-Anbieter** (alle OpenAI-kompatibel, kein Code-Umbau nötig):
+**Alle vier Anbieter sind vorbereitet.** Die Brücke liest `website/.env`; die Vorlage liegt daneben.
 
-| Anbieter | `ARCHIV_BASE_URL` | Beispielmodell |
-| --- | --- | --- |
-| Google Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-2.0-flash` |
-| Groq | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` |
-| OpenRouter | `https://openrouter.ai/api/v1` | `meta-llama/llama-3.3-70b-instruct:free` |
-| Cloudflare Workers AI | `https://api.cloudflare.com/client/v4/accounts/<id>/ai/v1` | `@cf/meta/llama-3.3-70b-instruct-fp8-fast` |
+```powershell
+cd "Archive Game\website"
+Copy-Item .env.example .env
+notepad .env
+```
+
+Dann in `.env` einen Anbieter wählen und den Schlüssel eintragen:
+
+```
+ARCHIV_PROVIDER=gemini
+GEMINI_API_KEY=dein-schluessel
+```
+
+Prüfen, was erreichbar ist:
+
+```powershell
+node scripts/check-providers.mjs
+```
+
+| Anbieter | Schlüssel | Standardmodell | Konto |
+| --- | --- | --- | --- |
+| Google Gemini | `GEMINI_API_KEY` | `gemini-2.0-flash` | aistudio.google.com/apikey |
+| Groq | `GROQ_API_KEY` | `llama-3.3-70b-versatile` | console.groq.com/keys |
+| OpenRouter | `OPENROUTER_API_KEY` | `meta-llama/llama-3.3-70b-instruct:free` | openrouter.ai/keys |
+| Cloudflare Workers AI | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | dash.cloudflare.com/profile/api-tokens |
+
+Ohne `ARCHIV_PROVIDER` nimmt die Brücke den ersten Anbieter mit Schlüssel. `ARCHIV_MODEL`
+überschreibt jedes Standardmodell.
 
 Die freien Kontingente sind begrenzt und ändern sich. Dauerhaft kostenlos und ohne Limit ist nur
 ein eigener Server mit Ollama (z. B. Oracle Cloud „Always Free"): `ARCHIV_BASE_URL=http://localhost:11434/v1`.
 
 Im HUD steht dann `LIVE` statt `LOKAL`. Der Tunnel unten im Haus zeigt denselben Zustand.
-Das Menü hat einen Eintrag **Verbindung**, der Zustand, Modell und die nötigen Befehle anzeigt.
+Das Menü hat einen Eintrag **Verbindung**, der Zustand, Modell und alle vier Anbieter anzeigt.
 
 | Taste | Wirkung |
 | --- | --- |

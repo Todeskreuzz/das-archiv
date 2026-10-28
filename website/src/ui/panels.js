@@ -334,15 +334,25 @@ export function connectionPanel(status = {}) {
 
     <p class="kicker" style="margin-top:20px">Kostenlose Anbieter</p>
     <div class="rows">
-      <div><span class="row__label">Google Gemini</span><span class="row__value">generativelanguage.googleapis.com/v1beta/openai/</span></div>
-      <div><span class="row__label">Groq</span><span class="row__value">api.groq.com/openai/v1</span></div>
-      <div><span class="row__label">OpenRouter</span><span class="row__value">openrouter.ai/api/v1</span></div>
-      <div><span class="row__label">Cloudflare Workers AI</span><span class="row__value">api.cloudflare.com/client/v4/accounts/&lt;id&gt;/ai/v1</span></div>
+      ${
+        Array.isArray(status.providers) && status.providers.length
+          ? status.providers
+              .map(
+                (entry) => `
+              <div>
+                <span class="row__label">${esc(entry.label)}</span>
+                <span class="row__value">${entry.ready ? 'bereit' : `kein Schlüssel · ${esc(entry.envKey)}`}</span>
+              </div>`,
+              )
+              .join('')
+          : `<div><span class="row__label">—</span><span class="row__value">noch nicht abgefragt</span></div>`
+      }
     </div>
     <p class="form__note" style="margin-top:12px">
-      Alle vier sprechen dieselbe Schnittstelle. Schlüssel setzen, Basis-Adresse und Modell
-      in <code>ARCHIV_*</code> eintragen, Brücke neu starten. Die freien Kontingente ändern sich;
-      dauerhaft kostenlos ist nur ein eigener Server mit Ollama.
+      Schlüssel in <code>website/.env</code> eintragen (Vorlage: <code>.env.example</code>),
+      <code>ARCHIV_PROVIDER</code> wählen, Brücke neu starten. Prüfen mit
+      <code>node scripts/check-providers.mjs</code>.
+      Die freien Kontingente ändern sich; dauerhaft kostenlos ist nur ein eigener Server mit Ollama.
     </p>`;
 
   return sheet({

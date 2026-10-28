@@ -6,7 +6,8 @@
   "description": "DAS ARCHIV - begehbares 3D-Museum fuer deutsche Internetgeschichte",
   "scripts": {
     "start": "node scripts/bridge.mjs",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "providers": "node scripts/check-providers.mjs"
   },
   "engines": {
     "node": ">=22"

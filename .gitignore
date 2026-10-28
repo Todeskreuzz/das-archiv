@@ -1,6 +1,8 @@
 node_modules/
 .preview/
 website/data/
+website/.env
+.env
 *.log
 .DS_Store
 Thumbs.db

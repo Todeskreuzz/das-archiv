@@ -1,0 +1,35 @@
+{
+  "gemini": {
+    "label": "Google Gemini",
+    "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
+    "model": "gemini-2.0-flash",
+    "keyEnv": "GEMINI_API_KEY",
+    "docs": "https://aistudio.google.com/apikey",
+    "note": "Groesstes Freikontingent, kein Server noetig."
+  },
+  "groq": {
+    "label": "Groq",
+    "baseUrl": "https://api.groq.com/openai/v1",
+    "model": "llama-3.3-70b-versatile",
+    "keyEnv": "GROQ_API_KEY",
+    "docs": "https://console.groq.com/keys",
+    "note": "Sehr schnell, kostenloses Kontingent pro Tag."
+  },
+  "openrouter": {
+    "label": "OpenRouter",
+    "baseUrl": "https://openrouter.ai/api/v1",
+    "model": "meta-llama/llama-3.3-70b-instruct:free",
+    "keyEnv": "OPENROUTER_API_KEY",
+    "docs": "https://openrouter.ai/keys",
+    "note": "Ein Schluessel fuer viele Modelle, freie Modelle mit :free."
+  },
+  "cloudflare": {
+    "label": "Cloudflare Workers AI",
+    "baseUrl": "https://api.cloudflare.com/client/v4/accounts/{account}/ai/v1",
+    "model": "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+    "keyEnv": "CLOUDFLARE_API_TOKEN",
+    "accountEnv": "CLOUDFLARE_ACCOUNT_ID",
+    "docs": "https://dash.cloudflare.com/profile/api-tokens",
+    "note": "Braucht Konto-ID und Token mit Workers-AI-Rechten."
+  }
+}

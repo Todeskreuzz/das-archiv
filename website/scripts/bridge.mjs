@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { reply as localReply, greeting as localGreeting, SUGGESTIONS } from '../src/ai/dialogue.js';
 import { RESEARCH_POOL } from '../src/ai/research.js';
 import { createScout } from './scout.mjs';
+import { loadEnv, loadProviders, listProviders, detectProvider, chat } from './providers.mjs';
 
 /**
  * Die Brücke.
@@ -21,11 +22,12 @@ import { createScout } from './scout.mjs';
 const root = fileURLToPath(new URL('..', import.meta.url));
 const port = Number(process.env.PORT || 4780);
 
-const API_KEY = process.env.ARCHIV_API_KEY || process.env.OPENAI_API_KEY || '';
-const BASE_URL = (process.env.ARCHIV_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, '');
-const MODEL = process.env.ARCHIV_MODEL || 'gpt-4o-mini';
+/* ---------------------------------------------------------------- Anbieter */
 
-const mode = API_KEY ? 'live' : 'local';
+const ENV = { ...loadEnv(), ...process.env };
+const PROVIDERS = loadProviders();
+const provider = detectProvider(ENV, PROVIDERS);
+const mode = provider ? 'live' : 'local';
 
 /* ------------------------------------------------------------------ Zustand */
 
@@ -110,33 +112,14 @@ function sessionLine() {
 }
 
 async function askModel(messages) {
-  const response = await fetch(`${BASE_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0.85,
-      max_tokens: 260,
-      messages,
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    throw new Error(`Modell antwortet ${response.status}: ${text.slice(0, 160)}`);
-  }
-
-  const data = await response.json();
-  const raw = data?.choices?.[0]?.message?.content || '';
-  const match = raw.match(/\{[\s\S]*\}/);
-  if (!match) return { say: raw.trim() };
+  const raw = await chat(provider, messages);
+  const text = String(raw || '').trim();
+  const match = text.match(/\{[\s\S]*\}/);
+  if (!match) return { say: text };
   try {
     return JSON.parse(match[0]);
   } catch {
-    return { say: raw.trim() };
+    return { say: text };
   }
 }
 
@@ -271,7 +254,21 @@ const server = createServer(async (req, res) => {
   /* --- Verbindung ------------------------------------------------------- */
 
   if (path === '/brain/status') {
-    json(res, 200, { mode, model: mode === 'live' ? MODEL : 'lokal', clients: clients.size });
+    json(res, 200, {
+      mode,
+      provider: provider?.id || null,
+      model: provider?.model || 'lokal',
+      clients: clients.size,
+      providers: listProviders(ENV, PROVIDERS).map((entry) => ({
+        id: entry.id,
+        label: entry.label,
+        model: entry.model,
+        ready: entry.ready,
+        envKey: entry.envKey,
+        docs: entry.docs,
+        note: entry.note,
+      })),
+    });
     return;
   }
 
@@ -283,7 +280,7 @@ const server = createServer(async (req, res) => {
       'access-control-allow-origin': '*',
     });
     res.write(': verbunden\n\n');
-    res.write(`data: ${JSON.stringify({ type: 'status', mode, model: mode === 'live' ? MODEL : 'lokal' })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'status', mode, provider: provider?.id || null, model: provider?.model || 'lokal' })}\n\n`);
     clients.add(res);
     req.on('close', () => clients.delete(res));
     return;
@@ -467,7 +464,7 @@ server.listen(port, () => {
   console.log('');
   console.log('  DAS ARCHIV �?" Brücke offen');
   console.log(`  http://localhost:${port}`);
-  console.log(`  Verbindung: ${mode === 'live' ? `live (${MODEL})` : 'lokal (kein Schlüssel gesetzt)'}`);
+  console.log(`  Verbindung: ${mode === 'live' ? `live (${provider.label} · ${provider.model})` : 'lokal (kein Schluessel gesetzt)'}`);
   console.log('');
 }).on('error', (error) => {
   console.error(`Port ${port} belegt: ${error.message}`);
