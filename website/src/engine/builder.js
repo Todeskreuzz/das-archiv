@@ -2,6 +2,7 @@ import * as THREE from '../../vendor/three.module.js';
 import { stoneFloorTexture, woodFloorTexture, checkerTexture, wallTexture, textTexture } from './textures.js';
 
 export const colliders = [];
+export const paintables = [];
 
 export function addCollider(x1, z1, x2, z2, tag = '') {
   const box = {
@@ -86,6 +87,7 @@ export function wall(parent, x1, z1, x2, z2, height, material, thickness = 0.26)
   mesh.rotation.y = -Math.atan2(dz, dx);
   mesh.receiveShadow = true;
   parent.add(mesh);
+  paintables.push(mesh);
 
   const half = thickness / 2 + 0.02;
   if (Math.abs(dx) > Math.abs(dz)) {

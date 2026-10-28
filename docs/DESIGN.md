@@ -497,3 +497,52 @@ Stift, Faltung und sechs Zeilen Umbruch gezeichnet.
    `{type:"graffiti"}` an alle anderen — sie sehen die Zeichnung sofort.
 
 Grenzen: 400 Striche und 60 Notizen pro Wand. Alte Einträge fallen zuerst heraus.
+
+---
+
+## 19. Der Scanner
+
+`scripts/scout.mjs`, alle 90 Sekunden von der Brücke aufgerufen.
+
+| Schritt | Regel |
+| --- | --- |
+| Warteschlange | 10 Startseiten, danach Links bis Tiefe 2 |
+| Erlaubnis | `robots.txt`, nur die `*`-Gruppe, längste Regel gewinnt |
+| Abruf | 7 s Timeout, 400 KB Grenze, eigener User-Agent |
+| Auswertung | Titel, Meta-Beschreibung, erster Absatz, Sprache, Links |
+| Bewertung | TLD +20, Sprache +15, Titel +10, Beschreibung +12, Signalwörter +18 |
+| Schwelle | 48 Punkte, Beschreibung mindestens 40 Zeichen |
+| Doppelung | bekannte URLs aus dem Spielstand werden übersprungen |
+
+Der Fund wird als Kandidat gebaut (`source: 'scanner'`, Kuratorvotum +1, zwei Startstimmen)
+und per SSE an alle Besucher geschickt. Mit Schlüssel schreibt das Modell die Beschreibung,
+ohne Schlüssel der Scanner selbst.
+
+## 20. Das Depot
+
+Halle östlich des Verbindungsraums: 14 × 12 m, 5,2 m hoch, Zugang durch eine Öffnung
+bei x = 13, z = −30.
+
+- Vier Regalreihen (x = 16 / 19,2 / 22,4 / 25,6), je 4 Böden, 12 Plätze pro Boden.
+- Jedes Stück im Bestand wird zu einer Kiste (0,5 × 0,34 × 0,62 m), verteilt über alle
+  Reihen, farbig nach Raum: Galerie bernstein, Spielhalle pink, Bibliothek zyan.
+- Kisten sind anklickbar und öffnen das Exponat.
+- Am Eingang ein Katalogscreen: öffnet die vollständige Liste.
+
+## 21. Freie Notizen
+
+`M` wirft einen Strahl auf die Wände (`paintables` in `builder.js`) und heftet dort eine
+Fläche von 1,7 × 0,95 m an. Gespeichert wird die Position und die Flächennormale:
+
+```json
+{ "decal": { "p": [x, y, z], "n": [nx, ny, nz], "w": 1.7, "h": 0.95 } }
+```
+
+Die Fläche hat eine eigene 1024 × 512-Leinwand, dieselbe Tafel wie die festen Wände.
+Beim Laden werden alle Notizen aus `graffiti.json` an ihren Koordinaten wieder aufgebaut.
+
+## 22. Persona
+
+`persona/curator.md` wird beim Start gelesen und bei **jeder** Anfrage an das Modell
+mitgeschickt: Charakter, Sprechweise, Wissen über das Haus, Projektgeschichte, Grenzen.
+Das ist der Unterschied zwischen „ein Modell antwortet" und „der Kurator antwortet".

@@ -284,7 +284,7 @@ export function allPanel() {
     })
     .join('');
 
-  return sheet({ kicker: 'Bestand', title: 'Alles', body, foot: '<button class="btn-line" data-close>Zurück · ESC</button>' });
+  return sheet({ kicker: 'Bestand', title: 'Katalog', body, foot: '<button class="btn-line" data-close>Zurück · ESC</button>' });
 }
 
 export function logPanel() {

@@ -2,7 +2,7 @@ import * as THREE from '../vendor/three.module.js';
 import { byRoom, EXHIBITS } from './data/seed.js';
 import { poster } from './data/art.js';
 import { svgTexture } from './engine/textures.js';
-import { createMaterials } from './engine/builder.js';
+import { createMaterials, paintables } from './engine/builder.js';
 import { createWorld } from './engine/world.js';
 import { createPlayer } from './engine/player.js';
 import { createVisitor } from './engine/visitor.js';
@@ -85,11 +85,12 @@ await Promise.all(
   }),
 );
 
-graffiti = createGraffiti();
+graffiti = createGraffiti({ scene });
 await graffiti.load();
 
-const world = createWorld({ materials, posterTextures, graffiti });
+const world = createWorld({ materials, posterTextures, graffiti, entries: liveEntries() });
 scene.add(world.root);
+world.interactables.push(...graffiti.decals());
 
 const player = createPlayer(camera, canvas);
 const visitor = createVisitor();
@@ -173,6 +174,7 @@ function syncLink() {
     pending: pendingCandidates().length,
     restored: Object.keys(state.restored).length,
     used: [...EXHIBITS, ...state.submissions].map((entry) => entry.id),
+    urls: [...EXHIBITS, ...state.submissions].map((entry) => entry.url).filter(Boolean),
   });
 }
 
@@ -216,7 +218,7 @@ if (!params.has('nolink')) {
       return;
     }
     if (event.type === 'find') {
-      const entry = RESEARCH_POOL.find((item) => item.id === event.id);
+      const entry = event.entry || RESEARCH_POOL.find((item) => item.id === event.id);
       if (!entry) return;
       const candidate = addCuratorFind(entry);
       if (!candidate) return;
@@ -374,11 +376,39 @@ function openPanel(html) {
 
 let wallCleanup = null;
 
-function openWall(wallId) {
-  const wall = wallById(wallId);
-  if (!wall) return;
-  openPanel(wallPanel(wall));
+function openWall(wallId, surface) {
+  const info = surface || wallById(wallId);
+  if (!info) return;
+  openPanel(wallPanel(info));
   wallCleanup = mountWall(graffiti, wallId, { onChange: () => updateHud() });
+}
+
+/** Notizfläche an der Wand vor der Kamera anheften. */
+function placeNote() {
+  raycaster.setFromCamera(center, camera);
+  const hits = raycaster.intersectObjects(paintables, false);
+  if (!hits.length) {
+    hud.toast('Keine Wand in Reichweite');
+    return;
+  }
+  const hit = hits[0];
+  if (!hit.face) return;
+  const normal = hit.face.normal.clone().transformDirection(hit.object.matrixWorld).normalize();
+
+  const { id, mesh } = graffiti.createDecal({ point: hit.point, normal });
+  mesh.userData.interact = { type: 'wall', id, label: 'Notiz' };
+  world.interactables.push(mesh);
+
+  graffiti.post(id, {
+    decal: {
+      p: [hit.point.x, hit.point.y, hit.point.z],
+      n: [normal.x, normal.y, normal.z],
+      w: 1.7,
+      h: 0.95,
+    },
+  });
+
+  openWall(id, { id, title: 'Notiz', room: 'Haus' });
 }
 
 menu.onAction((action) => {
@@ -448,6 +478,7 @@ function targetValue(data) {
   }
   if (data.type === 'prop') return 'Objekt';
   if (data.type === 'wall') return 'beschreibbar';
+  if (data.type === 'catalog') return 'Katalog';
   if (data.type === 'curator') return 'v0.9.4';
   if (data.type === 'ballot') return 'Abstimmung';
   if (data.type === 'submit') return 'Fund vorlegen';
@@ -469,6 +500,10 @@ function interact() {
   }
   if (data.type === 'wall') {
     openWall(data.id);
+    return;
+  }
+  if (data.type === 'catalog') {
+    openPanel(allPanel());
     return;
   }
   if (data.type === 'curator') {
@@ -618,6 +653,14 @@ document.addEventListener('keydown', (event) => {
     if (mode === 'world') {
       const third = player.toggleView();
       hud.toast(third ? 'Dritte Person' : 'Erste Person');
+    }
+    return;
+  }
+
+  if (event.key === 'm' || event.key === 'M') {
+    if (mode === 'world') {
+      event.preventDefault();
+      placeNote();
     }
     return;
   }

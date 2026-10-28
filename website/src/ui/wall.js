@@ -1,12 +1,11 @@
 import { esc } from '../util.js';
-import { wallById } from '../data/walls.js';
 
 /**
  * Die Wandtafel: zeichnen, schreiben, sehen, was andere hinterlassen haben.
  * Die Leinwand ist eine Kopie der Wand. Gespeichert werden nur die neuen Striche.
  */
-export function wallPanel(wall) {
-  const info = wallById(wall.id);
+export function wallPanel(surface) {
+  const info = surface;
   return `
   <div class="sheet">
     <header class="sheet__head">

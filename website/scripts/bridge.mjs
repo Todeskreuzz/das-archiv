@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { reply as localReply, greeting as localGreeting, SUGGESTIONS } from '../src/ai/dialogue.js';
 import { RESEARCH_POOL } from '../src/ai/research.js';
+import { createScout } from './scout.mjs';
 
 /**
  * Die Brücke.
@@ -36,6 +37,7 @@ let session = {
   rank: 'Aushilfe',
   restored: 0,
   used: [],
+  urls: [],
   inTunnel: false,
 };
 
@@ -94,10 +96,14 @@ Wie du sprichst:
 - Du bist kein Chatbot und entschuldigst dich nicht ständig.
 
 Antworte ausschließlich mit JSON in dieser Form:
-{"say": "...", "thought": "...", "go": "galerie|spielhalle|bibliothek|tunnel|halle|null"}
+{"say": "...", "thought": "...", "go": "galerie|spielhalle|bibliothek|tunnel|depot|halle|null"}
 
 "say" ist die Antwort an die Person. "thought" ist ein kurzer Gedanke (darf leer sein).
-"go" ist ein Raum, in den du dich begeben willst, oder null.`;
+"go" ist ein Raum, in den du dich begeben willst, oder null.
+
+--- Persona und Gedächtnis ---
+
+${await readFile(new URL('../persona/curator.md', import.meta.url), 'utf8').catch(() => '')}`;
 
 function sessionLine() {
   return `Bestand: ${session.total} Stücke. Offen beim Gremium: ${session.pending}. Angesehen: ${session.restored}.`;
@@ -184,8 +190,36 @@ function maybeFind() {
   if (!open.length) return;
   const entry = open[findCursor % open.length];
   findCursor += 1;
-  broadcast({ type: 'find', id: entry.id });
+  broadcast({ type: 'find', entry });
 }
+
+/* ------------------------------------------------------------------ Scout */
+
+const scout = createScout({
+  isKnown: (url) => session.urls.includes(url),
+  onLog: (line) => console.log(`  ${line}`),
+  onFind: async (entry, meta) => {
+    if (mode === 'live') {
+      try {
+        const result = await askModel([
+          { role: 'system', content: SYSTEM },
+          {
+            role: 'user',
+            content:
+              `Du hast diese Seite beim Durchsuchen des Netzes gefunden. Schreibe zwei Sätze für das Schild, ` +
+              `in deiner Stimme, ohne etwas zu erfinden.\nTitel: ${meta.title}\nAdresse: ${meta.url}\n` +
+              `Beschreibung: ${meta.description}\nAntworte nur mit dem Text.`,
+          },
+        ]);
+        if (result.say) entry.text = String(result.say).slice(0, 400);
+      } catch {
+        /* Ohne Modell bleibt die selbst geschriebene Beschreibung. */
+      }
+    }
+    broadcast({ type: 'find', entry });
+    console.log(`  Fund: ${entry.title} — ${entry.url}`);
+  },
+});
 
 /* ------------------------------------------------------------------ Server */
 
@@ -306,6 +340,12 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  if (path === '/brain/scan' && req.method === 'POST') {
+    const entry = await scout.scan();
+    json(res, 200, { found: Boolean(entry), entry });
+    return;
+  }
+
   /* --- W�nde ------------------------------------------------------------ */
 
   if (path === '/graffiti' && req.method === 'GET') {
@@ -321,6 +361,19 @@ const server = createServer(async (req, res) => {
       return;
     }
     const target = wallEntry(wall);
+
+    if (body.decal && Array.isArray(body.decal.p) && Array.isArray(body.decal.n)) {
+      target.decal = {
+        p: body.decal.p.map(Number),
+        n: body.decal.n.map(Number),
+        w: Number(body.decal.w) || 1.7,
+        h: Number(body.decal.h) || 0.95,
+      };
+      await saveGraffiti();
+      broadcast({ type: 'graffiti', wall, decal: target.decal });
+      json(res, 200, { ok: true });
+      return;
+    }
 
     if (body.stroke && Array.isArray(body.stroke.points) && body.stroke.points.length > 1) {
       const stroke = {
@@ -391,9 +444,14 @@ setInterval(() => {
     lastThoughtAt = now;
     think();
   }
-  if (now - lastFindAt > 110000) {
+  if (now - lastFindAt > 90000) {
     lastFindAt = now;
-    maybeFind();
+    scout
+      .scan()
+      .then((found) => {
+        if (!found) maybeFind();
+      })
+      .catch(() => maybeFind());
   }
 }, 5000);
 

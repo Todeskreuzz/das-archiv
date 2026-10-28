@@ -10,8 +10,16 @@ import * as THREE from '../../vendor/three.module.js';
 const W = 1024;
 const H = 512;
 
-export function createGraffiti() {
+export function createGraffiti({ scene } = {}) {
   const walls = new Map();
+  const decalMeshes = new Map();
+  let decalGroup = null;
+
+  if (scene) {
+    decalGroup = new THREE.Group();
+    decalGroup.name = 'notizen';
+    scene.add(decalGroup);
+  }
 
   function ensure(id) {
     if (walls.has(id)) return walls.get(id);
@@ -130,6 +138,16 @@ export function createGraffiti() {
       wall.strokes = Array.isArray(value.strokes) ? value.strokes : [];
       wall.notes = Array.isArray(value.notes) ? value.notes : [];
       redraw(id);
+
+      if (value.decal && Array.isArray(value.decal.p) && Array.isArray(value.decal.n)) {
+        createDecal({
+          point: new THREE.Vector3(...value.decal.p),
+          normal: new THREE.Vector3(...value.decal.n),
+          width: value.decal.w || 1.7,
+          height: value.decal.h || 0.95,
+          id,
+        });
+      }
     }
   }
 
@@ -165,6 +183,29 @@ export function createGraffiti() {
     return ensure(id).texture;
   }
 
+  /** Eine Notizfläche irgendwo an einer Wand. */
+  function createDecal({ point, normal, width = 1.7, height = 0.95, id }) {
+    const decalId = id || `decal-${Math.random().toString(36).slice(2, 9)}`;
+    const wall = ensure(decalId);
+
+    const mesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(width, height),
+      new THREE.MeshBasicMaterial({ map: wall.texture, transparent: true, depthWrite: false }),
+    );
+    const direction = normal.clone().normalize();
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), direction);
+    mesh.position.copy(point).addScaledVector(direction, 0.025);
+    mesh.userData.interact = { type: 'wall', id: decalId, label: 'Notiz' };
+
+    decalGroup?.add(mesh);
+    decalMeshes.set(decalId, mesh);
+    return { id: decalId, mesh };
+  }
+
+  function decals() {
+    return [...decalMeshes.values()];
+  }
+
   function noteCount() {
     let count = 0;
     for (const wall of walls.values()) count += wall.notes.length;
@@ -177,5 +218,5 @@ export function createGraffiti() {
     return count;
   }
 
-  return { load, post, apply, textureFor, wallData, noteCount, strokeCount, W, H };
+  return { load, post, apply, textureFor, wallData, noteCount, strokeCount, createDecal, decals, W, H };
 }

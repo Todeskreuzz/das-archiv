@@ -36,6 +36,10 @@ Kein Zeitlimit, keine Saison. Das hier ist ein Langzeitprojekt.
 | Nominieren mit sofortigem Urteil (0–100) | fertig |
 | **Kurator läuft selbstständig durch das Haus** | fertig |
 | **Brücke: die KI lebt im Server, nicht im Browser** | fertig |
+| **Persona-Datei: der Kurator hat ein Gedächtnis** | fertig |
+| **Scanner: durchsucht das Netz selbst** | fertig |
+| **Depot: alle Stücke als Kisten, dazu ein Katalog** | fertig |
+| **Notizen an jeder Wand** | fertig |
 | **Tunnel als sichtbare Verbindung, begehbar** | fertig |
 | **Jedes Objekt im Haus ist anfassbar** | fertig |
 | **Kurator denkt laut (Gedanken im HUD)** | fertig |
@@ -78,7 +82,8 @@ Im HUD steht dann `LIVE` statt `LOKAL`. Der Tunnel unten im Haus zeigt denselben
 | `Leertaste` | springen |
 | `Shift` | rennen — schneller, mit weiterem Schritt und Zug im Bild |
 | Maus | umsehen (Klick sperrt den Zeiger, Ziehen funktioniert auch ohne) |
-| `E` | Exponat ansehen · Objekt untersuchen · Terminal benutzen |
+| `E` | Exponat ansehen · Objekt untersuchen · Wand beschreiben |
+| `M` | Notizfläche an die Wand vor dir heften |
 | `T` | mit dem Kurator reden |
 | `V` | erste / dritte Person |
 | `Tab` | Menü |
@@ -140,6 +145,47 @@ Am Ende liegt der **Verbindungskern** und ein Terminal, das den Zustand der Leit
 Der Kurator geht regelmäßig hinunter. Es ist der einzige Ort im Haus, an dem man sieht,
 woher er kommt.
 
+### Wie die KI wirklich ins Spiel kommt
+
+Eine laufende Unterhaltung wie diese kann nicht dauerhaft im Spiel sitzen — sie hat keinen
+Prozess, kein Gedächtnis und keinen Ort, an dem sie auf Anfragen wartet. Was geht:
+
+1. Die Brücke hält die Verbindung und schickt bei jeder Frage den Spielstand mit.
+2. `persona/curator.md` enthält Charakter, Wissen und Regeln. Diese Datei wird bei **jeder**
+   Anfrage mitgeschickt. Sie ist das Gedächtnis, das ein Modell sonst nicht hat.
+3. Mit `ARCHIV_API_KEY` antwortet ein echtes Sprachmodell — in derselben Stimme, mit demselben
+   Gedächtnis, bei jeder Frage neu.
+4. Ohne Schlüssel antwortet die Brücke selbst mit derselben Persona. Der Unterschied ist die
+   Qualität, nicht die Figur.
+
+**Kostenlos:** Ein lokales Modell über Ollama oder LM Studio. `ARCHIV_BASE_URL=http://localhost:11434/v1`
+und `ARCHIV_MODEL=llama3.1` — dann läuft alles auf deinem Rechner, ohne Rechnung.
+
+### Der Scanner
+
+Alle 90 Sekunden schickt die Brücke den Scout los. Er besucht deutsche Seiten, liest
+`robots.txt`, holt Titel, Beschreibung und den ersten Absatz, verwirft Doppelungen und
+bewertet den Fund. Ab 48 Punkten wird daraus ein Kandidat für das Gremium.
+
+Ohne Schlüssel schreibt er die Beschreibung selbst. Mit Schlüssel darf das Modell sie
+formulieren — in der Stimme des Kurators.
+
+Startseiten: Wikipedia-Artikel zu Moorhuhn, StudiVZ, BTX, Krautchan, Netzpolitik, dazu
+heise.de, netzpolitik.org und Fefes Blog. Von dort folgt er Links bis Tiefe 2, nur auf
+`.de`, `.at`, `.ch`, `.org`, `.net`, `.com`.
+
+### Das Depot
+
+Hinter dem Verbindungsraum liegt eine Halle mit vier Regalreihen. Jedes Stück im Bestand
+steht dort als Kiste, farbig nach Raum. Am Eingang ein Katalogscreen: `E` öffnet die
+vollständige Liste mit Suche und Sprung zum Exponat.
+
+### Notizen überall
+
+`M` heftet eine Notizfläche an die Wand vor dir — überall im Haus, nicht nur an den sechs
+freien Wänden. Die Fläche hat ihre eigene Leinwand: schreiben, zeichnen, speichern.
+Sie bleibt, wo du sie hingehängt hast.
+
 ---
 
 ## Interaktion
@@ -176,7 +222,11 @@ Archive Game/
    ├─ Start-Vorschau.bat
    ├─ package.json
    ├─ vendor/three.module.js
-   ├─ scripts/bridge.mjs          ← Server + Leitung zur KI
+   ├─ scripts/
+   │  ├─ bridge.mjs              ← Server, Leitung, Wände, Persona
+   │  └─ scout.mjs              ← der Internet-Scanner
+   ├─ persona/
+   │  └─ curator.md             ← Charakter und Gedächtnis des Kurators
    ├─ styles/
    │  ├─ base.css                ← 1-Bit-Raster, Panels, Formulare
    │  └─ world.css               ← Bühne, HUD, Zielscan, Chat

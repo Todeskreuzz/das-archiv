@@ -69,7 +69,7 @@ function posterMesh(texture, width, brightness = 1) {
 
 /* ================================================================== Welt */
 
-export function createWorld({ materials, posterTextures, graffiti }) {
+export function createWorld({ materials, posterTextures, graffiti, entries = [] }) {
   const root = new THREE.Group();
   const interactables = [];
 
@@ -806,8 +806,10 @@ export function createWorld({ materials, posterTextures, graffiti }) {
   wall(root, V.x1, V.z2, T.x1, V.z2, V.h, materials.wall);
   wall(root, T.x2, V.z2, V.x2, V.z2, V.h, materials.wall);
   wall(root, V.x1, V.z1, V.x1, V.z2, V.h, materials.wall);
-  wall(root, V.x2, V.z1, V.x2, V.z2, V.h, materials.wall);
+  wall(root, V.x2, V.z1, V.x2, -31, V.h, materials.wall);
+  wall(root, V.x2, -29, V.x2, V.z2, V.h, materials.wall);
   wall(root, V.x1, V.z1, V.x2, V.z1, V.h, materials.wall);
+  root.add(box(0.3, V.h - 2.4, 2, materials.wall, V.x2, 2.4 + (V.h - 2.4) / 2, -30));
 
   ceilingAt(root, materials.ceiling, T.x1, T.x2, T.z1, T.z2, T.h);
   ceilingAt(root, materials.ceiling, V.x1, V.x2, V.z1, V.z2, V.h);
@@ -1006,6 +1008,99 @@ export function createWorld({ materials, posterTextures, graffiti }) {
     interactables.push(hit);
     group.add(hit);
   }
+
+  /* ------------------------------------------------------------- Depot */
+
+  const D = { x1: 13, x2: 27, z1: -34, z2: -22, h: 5.2 };
+
+  floorAt(root, materials.hallFloor, D.x1, D.x2, D.z1, D.z2);
+  wall(root, D.x1, D.z2, D.x2, D.z2, D.h, materials.wallDark);
+  wall(root, D.x2, D.z1, D.x2, D.z2, D.h, materials.wallDark);
+  wall(root, D.x1, D.z1, D.x2, D.z1, D.h, materials.wallDark);
+  wall(root, D.x1, -27, D.x1, D.z2, D.h, materials.wallDark);
+  ceilingAt(root, materials.ceiling, D.x1, D.x2, D.z1, D.z2, D.h);
+
+  const depotSign = label('DEPOT', { width: 3.4, color: '#ffcf6a', letterSpacing: 18 });
+  depotSign.position.set(D.x1 + 0.16, 3.6, -30);
+  depotSign.rotation.y = Math.PI / 2;
+  root.add(depotSign);
+
+  for (const z of [-26, -30]) {
+    const depotLight = new THREE.PointLight(0xffe2c0, 130, 18, 1.5);
+    depotLight.position.set(20, 4.6, z);
+    root.add(depotLight);
+  }
+
+  // Regalreihen
+  const rows = [16, 19.2, 22.4, 25.6];
+  const perLevel = 12;
+  const levels = 4;
+  const step = 0.94;
+  const startZ = -32.6;
+  const shelves = [];
+
+  for (const rowX of rows) {
+    const shelf = new THREE.Group();
+    shelf.position.set(rowX, 0, 0);
+    root.add(shelf);
+    shelves.push(shelf);
+
+    shelf.add(box(0.9, 0.06, 11.2, materials.woodDark, 0, 0.02, -27.5));
+    for (const z of [-33.1, -21.9]) {
+      shelf.add(box(0.16, 2.6, 0.16, materials.woodDark, 0, 1.3, z));
+    }
+    for (let level = 0; level < levels; level += 1) {
+      const y = 0.35 + level * 0.62;
+      shelf.add(box(0.86, 0.05, 11.1, materials.wood, 0, y, -27.5));
+    }
+
+    mark(shelf, [0.95, 2.6, 11.2], [0, 1.3, -27.5], 'regal', 'Depotregal');
+  }
+
+  // Kisten gleichmäßig auf alle Reihen verteilen
+  entries.forEach((entry, index) => {
+    const rowIndex = index % rows.length;
+    const level = Math.floor(index / rows.length) % levels;
+    const slotIndex = Math.floor(index / (rows.length * levels)) % perLevel;
+    const shelf = shelves[rowIndex];
+    const y = 0.35 + level * 0.62 + 0.2;
+    const z = startZ + slotIndex * step;
+    const accent = entry.room === 'spielhalle' ? 0xff4d9d : entry.room === 'galerie' ? 0xd8a441 : 0x6ee7d7;
+
+    const carton = new THREE.Mesh(
+      new THREE.BoxGeometry(0.5, 0.34, 0.62),
+      new THREE.MeshLambertMaterial({ color: 0x8a7a5e, emissive: accent, emissiveIntensity: 0.045 }),
+    );
+    carton.position.set(0, y, z);
+    carton.rotation.y = (index % 2 ? 1 : -1) * 0.02;
+    carton.userData.interact = { type: 'exhibit', id: entry.id, label: entry.title };
+    interactables.push(carton);
+    shelf.add(carton);
+
+    shelf.add(box(0.51, 0.05, 0.63, new THREE.MeshBasicMaterial({ color: accent }), 0, y + 0.15, z));
+  });
+
+  // Katalogterminal am Eingang
+  const catalog = new THREE.Group();
+  catalog.position.set(14.4, 0, -30);
+  root.add(catalog);
+  catalog.add(box(1.1, 1.0, 0.6, materials.ink, 0, 0.5, 0));
+  catalog.add(box(1.16, 0.06, 0.66, materials.brass, 0, 1.03, 0));
+  const catalogHead = new THREE.Group();
+  catalogHead.position.set(0, 1.3, 0.02);
+  catalogHead.rotation.x = -0.34;
+  catalog.add(catalogHead);
+  catalogHead.add(box(1.02, 0.66, 0.07, materials.brassDark, 0, 0, 0));
+  const catalogScreen = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.94, 0.58),
+    new THREE.MeshBasicMaterial({ map: consoleTexture('KATALOG', 'alles im Haus', '#ffcf6a'), toneMapped: false }),
+  );
+  catalogScreen.position.z = 0.04;
+  catalogScreen.userData.interact = { type: 'catalog', label: 'Katalog öffnen' };
+  interactables.push(catalogScreen);
+  catalogHead.add(catalogScreen);
+  addCollider(13.85, -30.35, 14.95, -29.65);
+  shadowBlob(root, 14.4, -30, 1.2, 0.35);
 
   /* ------------------------------------------------------------- Animation */
 

@@ -160,7 +160,7 @@ export function createPlayer(camera, domElement) {
     const next = { x: position.x + velocity.x * dt, z: position.z + velocity.z * dt };
     resolve(next, RADIUS);
 
-    next.x = Math.max(-21.4, Math.min(21.4, next.x));
+    next.x = Math.max(-21.4, Math.min(26.6, next.x));
     next.z = Math.max(-34.2, Math.min(7.4, next.z));
 
     position.x = next.x;
