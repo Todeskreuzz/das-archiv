@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>DAS ARCHIV — Deutsches Internet-Museum</title>
+  <meta name="description" content="Ein begehbares Museum für deutsche Internetgeschichte. Galerie, Spielhalle, Bibliothek — geführt von einer KI.">
+  <meta name="theme-color" content="#05070c">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%2305070c'/%3E%3Crect x='6' y='6' width='20' height='20' fill='none' stroke='%23e8e2d0' stroke-width='2'/%3E%3Crect x='11' y='13' width='3' height='3' fill='%236ee7d7'/%3E%3Crect x='18' y='13' width='3' height='3' fill='%236ee7d7'/%3E%3Crect x='11' y='20' width='10' height='1' fill='%236ee7d7'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/world.css">
+</head>
+<body>
+  <canvas id="scene" aria-label="Das Archiv — begehbare 3D-Welt"></canvas>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="scanfix" aria-hidden="true"></div>
+
+  <!-- HUD -->
+  <div id="hud" class="hud" hidden>
+    <aside class="hud__ai">
+      <div class="hud__ai-top">
+        <span class="hud__avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24">
+            <rect x="4" y="3" width="16" height="18" fill="none" stroke="currentColor" stroke-width="1.4"/>
+            <rect x="7.5" y="8" width="3" height="3" fill="currentColor"/>
+            <rect x="13.5" y="8" width="3" height="3" fill="currentColor"/>
+            <rect x="7.5" y="15" width="9" height="1.2" fill="currentColor"/>
+            <rect x="7.5" y="12" width="9" height="0.8" fill="currentColor" opacity="0.35"/>
+          </svg>
+        </span>
+        <span class="hud__ai-name">KURATOR</span>
+        <span class="hud__link" id="ai-link" data-mode="offline">OFFLINE</span>
+        <span class="hud__ai-state" id="ai-state">BEREIT</span>
+      </div>
+      <p class="hud__quote" id="ai-quote">Ich bin die KI, die dieses Haus führt.</p>
+    </aside>
+
+    <aside class="hud__stats">
+      <div class="hud__row"><span>BESTAND</span><b id="stat-total">38</b></div>
+      <div class="hud__row"><span>ANGESEHEN</span><b id="stat-secured">00</b></div>
+      <div class="hud__row"><span>NOTIZEN</span><b id="stat-notes">0</b></div>
+      <div class="hud__row"><span>ANZEICHEN</span><b id="stat-marks">0</b></div>
+      <button class="hud__menu" id="menu-button" type="button">MENÜ <kbd>TAB</kbd></button>
+    </aside>
+
+    <div class="scan" id="target" hidden>
+      <div class="scan__box"><i class="scan__line"></i></div>
+      <div class="scan__card">
+        <span class="scan__hole" aria-hidden="true"></span>
+        <b id="target-label"></b>
+        <span id="target-value"></span>
+        <kbd>E</kbd>
+      </div>
+    </div>
+
+    <div class="hud__sprint" id="sprint" hidden>▸ RENNEN</div>
+
+    <footer class="hud__hint">
+      <span>WASD GEHEN</span>
+      <span>LEERTASTE SPRINGEN</span>
+      <span>SHIFT RENNEN</span>
+      <span>MAUS UMSEHEN</span>
+      <span>E BENUTZEN</span>
+      <span>T REDEN</span>
+      <span>V ANSICHT</span>
+      <span>TAB MENÜ</span>
+    </footer>
+  </div>
+
+  <!-- Gespräch -->
+  <div id="chat" class="chat" hidden>
+    <div class="chat__head">
+      <span class="chat__title">KURATOR · GESPRÄCH</span>
+      <span class="chat__hint">ESC SCHLIESST</span>
+      <button class="chat__close" type="button" data-chat-close aria-label="Schließen">✕</button>
+    </div>
+    <div class="chat__log" id="chat-log"></div>
+    <div class="chat__chips" id="chat-chips"></div>
+    <form class="chat__form" id="chat-form">
+      <input id="chat-input" type="text" maxlength="240" autocomplete="off" placeholder="Frag den Kurator …">
+      <button class="btn-line" type="submit">SENDEN</button>
+    </form>
+  </div>
+
+  <!-- Menü -->
+  <div id="menu" class="menu" hidden></div>
+
+  <!-- Panel -->
+  <div id="panel" class="panel" hidden>
+    <div class="panel__card" id="panel-card" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <div id="toasts" class="toasts" aria-live="polite"></div>
+
+  <script>
+    window.__errors = [];
+    const record = (text) => {
+      window.__errors.push(String(text));
+      document.documentElement.dataset.error = window.__errors.join(' || ');
+    };
+    window.addEventListener('error', (event) => record(event.message || event.error));
+    window.addEventListener('unhandledrejection', (event) => record(event.reason));
+  </script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
