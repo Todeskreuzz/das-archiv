@@ -40,6 +40,8 @@ Kein Zeitlimit, keine Saison. Das hier ist ein Langzeitprojekt.
 | **Gesprächsverlauf überlebt Neustarts** | fertig |
 | **Scanner: durchsucht das Netz selbst** | fertig |
 | **Depot: alle Stücke als Kisten, dazu ein Katalog** | fertig |
+| **Gedankenbuch: er notiert, was er denkt** | fertig |
+| **Ausstellungen als GitHub-Pages-Seiten** | fertig |
 | **Notizen an jeder Wand** | fertig |
 | **Tunnel als sichtbare Verbindung, begehbar** | fertig |
 | **Jedes Objekt im Haus ist anfassbar** | fertig |
@@ -239,6 +241,23 @@ heise.de, netzpolitik.org und Fefes Blog. Von dort folgt er Links bis Tiefe 2, n
 Hinter dem Verbindungsraum liegt eine Halle mit vier Regalreihen. Jedes Stück im Bestand
 steht dort als Kiste, farbig nach Raum. Am Eingang ein Katalogscreen: `E` öffnet die
 vollständige Liste mit Suche und Sprung zum Exponat.
+
+### Das Gedankenbuch
+
+Der Kurator notiert jeden Gedanken, den er laut denkt oder beim Suchen hat — auf dem Server
+in `website/data/thoughts.json`. Im Menü unter **Gedanken** liest du sie mit Datum und Uhrzeit.
+Sie sind nicht für dich geschrieben; genau deshalb taugen sie als Bauplan für die Welt.
+
+### Ausstellungen
+
+Der Kurator kann eigene Sammlungen veröffentlichen: Er wählt Stücke, schreibt Titel und
+Einleitung, baut daraus eine statische Seite in `docs/ausstellung/` und committet sie.
+GitHub Pages liefert sie öffentlich aus:
+
+**<https://todeskreuzz.github.io/das-archiv/>**
+
+Im Menü unter **Ausstellung** löst du das mit einem Knopf aus. Automatisch alle vier Stunden
+nur mit `ARCHIV_PUBLISH=1` in der `.env` — sonst entscheidest du.
 
 ### Notizen überall
 
