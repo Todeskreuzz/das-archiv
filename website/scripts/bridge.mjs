@@ -446,6 +446,8 @@ setInterval(() => {
   }
   if (now - lastFindAt > 90000) {
     lastFindAt = now;
+    // Nicht zu viele offene Vorschläge auf einmal.
+    if ((session.pending || 0) >= 10) return;
     scout
       .scan()
       .then((found) => {

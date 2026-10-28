@@ -304,8 +304,56 @@ export function logPanel() {
   return sheet({ kicker: 'Kuratorium', title: 'Protokoll', body, foot: '<button class="btn-line" data-close>Zurück · ESC</button>' });
 }
 
-export function aboutPanel() {
+/* ------------------------------------------------------------ Verbindung */
+
+export function connectionPanel(status = {}) {
+  const mode = status.mode || 'offline';
+  const label = mode === 'live' ? 'LIVE' : mode === 'local' ? 'LOKAL' : 'OFFLINE';
+
   const body = `
+    <div class="rows">
+      <div><span class="row__label">Zustand</span><span class="row__value">${label}</span></div>
+      <div><span class="row__label">Modell</span><span class="row__value">${esc(status.model || '—')}</span></div>
+      <div><span class="row__label">Brücke</span><span class="row__value">localhost:4780</span></div>
+    </div>
+
+    ${
+      mode === 'offline'
+        ? `<p class="ballot__lead" style="margin-top:16px">
+            Die Brücke antwortet nicht. Sie wird mit dem Spiel gestartet — entweder über
+            <strong>Start-Vorschau.bat</strong> oder mit <code>node scripts/bridge.mjs</code>
+            im Ordner <code>website</code>. Wenn die Seite direkt als Datei geöffnet wurde,
+            gibt es keine Brücke; dann bitte über <code>http://localhost:4780</code> öffnen.
+          </p>`
+        : `<p class="ballot__lead" style="margin-top:16px">
+            ${mode === 'live'
+              ? 'Die Leitung steht. Der Kurator antwortet über ein Sprachmodell, mit der Persona-Datei als Gedächtnis.'
+              : 'Die Leitung steht, aber ohne Schlüssel. Der Kurator denkt selbst — dieselbe Persona, dieselben Regeln, kein Netz.'}
+          </p>`
+    }
+
+    <p class="kicker" style="margin-top:20px">Kostenlose Anbieter</p>
+    <div class="rows">
+      <div><span class="row__label">Google Gemini</span><span class="row__value">generativelanguage.googleapis.com/v1beta/openai/</span></div>
+      <div><span class="row__label">Groq</span><span class="row__value">api.groq.com/openai/v1</span></div>
+      <div><span class="row__label">OpenRouter</span><span class="row__value">openrouter.ai/api/v1</span></div>
+      <div><span class="row__label">Cloudflare Workers AI</span><span class="row__value">api.cloudflare.com/client/v4/accounts/&lt;id&gt;/ai/v1</span></div>
+    </div>
+    <p class="form__note" style="margin-top:12px">
+      Alle vier sprechen dieselbe Schnittstelle. Schlüssel setzen, Basis-Adresse und Modell
+      in <code>ARCHIV_*</code> eintragen, Brücke neu starten. Die freien Kontingente ändern sich;
+      dauerhaft kostenlos ist nur ein eigener Server mit Ollama.
+    </p>`;
+
+  return sheet({
+    kicker: 'Leitung',
+    title: 'Verbindung',
+    body,
+    foot: '<button class="btn-line" data-close>Zurück · ESC</button>',
+  });
+}
+
+export function aboutPanel() {  const body = `
     <p class="ballot__lead">
       Das Archiv sammelt deutsche Internetgeschichte: Grafiken, Browserspiele, Portale, Weblogs,
       Communities und die Vorläufer vor dem Web.

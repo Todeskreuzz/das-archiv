@@ -9,6 +9,11 @@ const ITEMS = [
   { id: 'about', label: 'Über das Archiv', hint: () => 'Haus & Regeln' },
   { id: 'anon', label: 'Anonymität', hint: () => 'deine Spuren' },
   { id: 'account', label: 'Dein Konto', hint: () => 'lokal, ohne Passwort' },
+  {
+    id: 'verbindung',
+    label: 'Verbindung',
+    hint: () => (globalThis.__archivLink === 'live' ? 'live' : globalThis.__archivLink === 'local' ? 'lokal' : 'offline'),
+  },
 ];
 
 export function createMenu() {

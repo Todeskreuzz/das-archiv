@@ -25,6 +25,7 @@ import {
   aboutPanel,
   anonPanel,
   accountPanel,
+  connectionPanel,
 } from './ui/panels.js';
 import {
   state,
@@ -143,6 +144,7 @@ let mode = 'boot';
 let lastFind = null;
 let suppressResume = false;
 let link = null;
+let lastLinkMode = null;
 const sprintBadge = document.querySelector('#sprint');
 
 function chatContext() {
@@ -238,10 +240,22 @@ if (!params.has('nolink')) {
     }
   },
   onStatus: (status) => {
+    globalThis.__archivLink = status.mode;
     hud.setLink(status.mode);
     world.setLinkMode(status.mode === 'live' ? 'live' : status.mode === 'local' ? 'local' : 'offline');
     agent.setRemote(status.mode === 'live' || status.mode === 'local');
-    if (status.mode === 'live') hud.toast(`Leitung steht · ${status.model}`);
+
+    if (status.mode === 'offline' && lastLinkMode !== 'offline') {
+      hud.say('Keine Verbindung zur Brücke. Läuft der Server auf Port 4780?', 'OFFLINE');
+    }
+    if (status.mode !== 'offline' && lastLinkMode === 'offline') {
+      hud.say('Die Leitung steht wieder.', 'BEREIT');
+    }
+    if (status.mode === 'live' && lastLinkMode !== 'live') {
+      hud.toast(`Leitung steht · ${status.model}`);
+      hud.say('Die Leitung steht. Ab jetzt antworte ich über ein Modell — mit meiner Persona.', 'BEREIT');
+    }
+    lastLinkMode = status.mode;
   },
   });
 }
@@ -420,6 +434,7 @@ menu.onAction((action) => {
   if (action === 'about') return openPanel(aboutPanel());
   if (action === 'anon') return openPanel(anonPanel());
   if (action === 'account') return openPanel(accountPanel());
+  if (action === 'verbindung') return openPanel(connectionPanel(link?.status || { mode: 'offline' }));
   return undefined;
 });
 
@@ -722,6 +737,13 @@ if (openParam) {
     else if (openParam.startsWith('wall:')) openWall(openParam.slice(5));
     else if (openParam === 'menu') openMenu('pause');
   }, 500);
+}
+
+// Wenn die Datei direkt geöffnet wurde, gibt es keine Brücke.
+if (location.protocol === 'file:') {
+  hud.hide();
+  openMenu('start');
+  setTimeout(() => openPanel(connectionPanel({ mode: 'offline' })), 400);
 }
 
 /* --------------------------------------------------------------- Schleife */

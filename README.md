@@ -65,16 +65,29 @@ node scripts/bridge.mjs
 Dann <http://localhost:4780> öffnen. Kein Build, kein `npm install`, keine Internetverbindung nötig.
 
 **Live-Modus (echtes Sprachmodell):** Die Brücke spricht mit einer OpenAI-kompatiblen API, wenn ein
-Schlüssel gesetzt ist. Ohne Schlüssel denkt sie selbst — dieselbe Logik, nur ohne Netz.
+Schlüssel gesetzt ist. Ohne Schlüssel denkt sie selbst — dieselbe Persona, nur ohne Netz.
 
 ```powershell
 $env:ARCHIV_API_KEY = "sk-..."
-$env:ARCHIV_MODEL   = "gpt-4o-mini"          # optional
-$env:ARCHIV_BASE_URL = "https://api.openai.com/v1"   # optional, auch lokal möglich
+$env:ARCHIV_MODEL   = "gpt-4o-mini"            # optional
+$env:ARCHIV_BASE_URL = "https://api.openai.com/v1"
 node scripts/bridge.mjs
 ```
 
+**Komplett kostenlose Cloud-Anbieter** (alle OpenAI-kompatibel, kein Code-Umbau nötig):
+
+| Anbieter | `ARCHIV_BASE_URL` | Beispielmodell |
+| --- | --- | --- |
+| Google Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | `gemini-2.0-flash` |
+| Groq | `https://api.groq.com/openai/v1` | `llama-3.3-70b-versatile` |
+| OpenRouter | `https://openrouter.ai/api/v1` | `meta-llama/llama-3.3-70b-instruct:free` |
+| Cloudflare Workers AI | `https://api.cloudflare.com/client/v4/accounts/<id>/ai/v1` | `@cf/meta/llama-3.3-70b-instruct-fp8-fast` |
+
+Die freien Kontingente sind begrenzt und ändern sich. Dauerhaft kostenlos und ohne Limit ist nur
+ein eigener Server mit Ollama (z. B. Oracle Cloud „Always Free"): `ARCHIV_BASE_URL=http://localhost:11434/v1`.
+
 Im HUD steht dann `LIVE` statt `LOKAL`. Der Tunnel unten im Haus zeigt denselben Zustand.
+Das Menü hat einen Eintrag **Verbindung**, der Zustand, Modell und die nötigen Befehle anzeigt.
 
 | Taste | Wirkung |
 | --- | --- |

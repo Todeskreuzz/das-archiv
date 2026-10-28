@@ -22,7 +22,7 @@ const SEEDS = [
   'https://blog.fefe.de',
 ];
 
-const SKIP = /(impressum|datenschutz|kontakt|agb|login|anmelden|warenkorb|checkout|cookie|feed|rss|\.pdf$|\.jpg$|\.png$|\.zip$)/i;
+const SKIP = /(impressum|datenschutz|kontakt|agb|login|anmelden|warenkorb|checkout|cookie|feed|rss|\.pdf$|\.jpg$|\.png$|\.zip$|Hauptseite|Wikipedia:|Portal:|Kategorie:|Hilfe:|Spezial:|Datei:|Diskussion:)/i;
 const SIGNAL = /(archiv|internet|web|forum|chat|community|blog|spiel|browser|modem|mailbox|homepage|portal|netzkultur|retro|199\d|200\d)/i;
 const ALLOWED_TLD = /\.(de|at|ch|org|net|com)$/i;
 
