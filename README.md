@@ -106,6 +106,19 @@ node scripts/check-providers.mjs
 Ohne `ARCHIV_PROVIDER` nimmt die Brücke den ersten Anbieter mit Schlüssel. `ARCHIV_MODEL`
 überschreibt jedes Standardmodell.
 
+**Schlüssel aus KeePassXC holen:** `scripts/import-keepass.ps1` liest die Gruppe
+„Das Archiv Browser Spiel mit integrierter KI" und schreibt die drei Schlüssel direkt in `.env`.
+Das Master-Passwort wird nur lokal abgefragt und nirgends gespeichert.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\import-keepass.ps1
+# mit Key-Datei:
+powershell -ExecutionPolicy Bypass -File scripts\import-keepass.ps1 -KeyFile "E:\Tresor\Key KeePassXC.txt"
+```
+
+Das Skript zeigt nur die *Namen* der gelesenen Einträge und die Länge der Schlüssel,
+nie die Werte. `.env` ist in `.gitignore`.
+
 Die freien Kontingente sind begrenzt und ändern sich. Dauerhaft kostenlos und ohne Limit ist nur
 ein eigener Server mit Ollama (z. B. Oracle Cloud „Always Free"): `ARCHIV_BASE_URL=http://localhost:11434/v1`.
 
