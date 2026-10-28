@@ -14,14 +14,15 @@ const root = fileURLToPath(new URL('..', import.meta.url));
 export function loadEnv(file = join(root, '.env')) {
   if (!existsSync(file)) return {};
   const result = {};
-  const text = readFileSync(file, 'utf8');
+  // Windows-Editoren schreiben manchmal ein BOM — das würde den ersten Schluessel zerstoeren.
+  const text = readFileSync(file, 'utf8').replace(/^\uFEFF/, '');
 
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line || line.startsWith('#')) continue;
     const index = line.indexOf('=');
     if (index < 0) continue;
-    const key = line.slice(0, index).trim();
+    const key = line.slice(0, index).trim().replace(/^\uFEFF/, '');
     let value = line.slice(index + 1).trim();
     if (
       (value.startsWith('"') && value.endsWith('"')) ||

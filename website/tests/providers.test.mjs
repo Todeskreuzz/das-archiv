@@ -50,6 +50,13 @@ test('loadEnv ohne Datei gibt ein leeres Objekt', () => {
   assert.deepEqual(loadEnv(join(tmpdir(), 'gibt-es-nicht-'.concat(String(Date.now()), '.env'))), {});
 });
 
+test('loadEnv ignoriert ein BOM am Dateianfang', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'archiv-bom-'));
+  const file = join(dir, '.env');
+  writeFileSync(file, '\uFEFFGEMINI_API_KEY=abc', 'utf8');
+  assert.equal(loadEnv(file).GEMINI_API_KEY, 'abc');
+});
+
 test('Anbieter ohne Schlüssel ist nicht bereit', () => {
   const provider = resolveProvider('gemini', {}, PROVIDERS);
   assert.equal(provider.ready, false);
