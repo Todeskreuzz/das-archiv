@@ -21,6 +21,10 @@
     "model": "meta-llama/llama-3.3-70b-instruct:free",
     "keyEnv": "OPENROUTER_API_KEY",
     "docs": "https://openrouter.ai/keys",
+    "headers": {
+      "HTTP-Referer": "https://github.com/Todeskreuzz/das-archiv",
+      "X-Title": "Das Archiv"
+    },
     "note": "Ein Schluessel fuer viele Modelle, freie Modelle mit :free."
   },
   "cloudflare": {

@@ -64,6 +64,7 @@ export function resolveProvider(id, env, providers) {
     envKey: config.keyEnv,
     docs: config.docs,
     note: config.note,
+    headers: config.headers || {},
     ready: Boolean(key && baseUrl && !baseUrl.includes('{') && !missingAccount),
   };
 }
@@ -111,6 +112,7 @@ export async function chat(provider, messages, options = {}) {
       headers: {
         'content-type': 'application/json',
         authorization: `Bearer ${provider.key}`,
+        ...(provider.headers || {}),
       },
       body: JSON.stringify({
         model: provider.model,
