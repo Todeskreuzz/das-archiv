@@ -2,30 +2,30 @@
   "gemini": {
     "label": "Google Gemini",
     "baseUrl": "https://generativelanguage.googleapis.com/v1beta/openai",
-    "model": "gemini-2.0-flash",
+    "model": "gemini-3.6-flash",
     "keyEnv": "GEMINI_API_KEY",
     "docs": "https://aistudio.google.com/apikey",
-    "note": "Groesstes Freikontingent, kein Server noetig."
+    "note": "Groesstes Freikontingent, kein Server noetig. Modell am 28.10.2026 geprueft."
   },
   "groq": {
     "label": "Groq",
     "baseUrl": "https://api.groq.com/openai/v1",
-    "model": "llama-3.3-70b-versatile",
+    "model": "openai/gpt-oss-20b",
     "keyEnv": "GROQ_API_KEY",
     "docs": "https://console.groq.com/keys",
-    "note": "Sehr schnell, kostenloses Kontingent pro Tag."
+    "note": "Sehr schnell (ca. 0,4 s). Modell am 28.10.2026 geprueft."
   },
   "openrouter": {
     "label": "OpenRouter",
     "baseUrl": "https://openrouter.ai/api/v1",
-    "model": "meta-llama/llama-3.3-70b-instruct:free",
+    "model": "openrouter/free",
     "keyEnv": "OPENROUTER_API_KEY",
     "docs": "https://openrouter.ai/keys",
     "headers": {
       "HTTP-Referer": "https://github.com/Todeskreuzz/das-archiv",
       "X-Title": "Das Archiv"
     },
-    "note": "Ein Schluessel fuer viele Modelle, freie Modelle mit :free."
+    "note": "openrouter/free waehlt automatisch ein freies Modell. Modell am 28.10.2026 geprueft."
   },
   "cloudflare": {
     "label": "Cloudflare Workers AI",

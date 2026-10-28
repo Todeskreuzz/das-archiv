@@ -98,10 +98,18 @@ node scripts/check-providers.mjs
 
 | Anbieter | Schlüssel | Standardmodell | Konto |
 | --- | --- | --- | --- |
-| Google Gemini | `GEMINI_API_KEY` | `gemini-2.0-flash` | aistudio.google.com/apikey |
-| Groq | `GROQ_API_KEY` | `llama-3.3-70b-versatile` | console.groq.com/keys |
-| OpenRouter | `OPENROUTER_API_KEY` | `meta-llama/llama-3.3-70b-instruct:free` | openrouter.ai/keys |
+| Google Gemini | `GEMINI_API_KEY` | `gemini-3.6-flash` | aistudio.google.com/apikey |
+| Groq | `GROQ_API_KEY` | `openai/gpt-oss-20b` | console.groq.com/keys |
+| OpenRouter | `OPENROUTER_API_KEY` | `openrouter/free` | openrouter.ai/keys |
 | Cloudflare Workers AI | `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` | `@cf/meta/llama-3.3-70b-instruct-fp8-fast` | dash.cloudflare.com/profile/api-tokens |
+
+Modellnamen ändern sich. Wenn ein Anbieter `404 model not found` meldet:
+
+```powershell
+node scripts/list-models.mjs
+```
+
+Das fragt bei jedem eingerichteten Anbieter die aktuelle Liste ab (ohne Schlüssel auszugeben).
 
 Ohne `ARCHIV_PROVIDER` nimmt die Brücke den ersten Anbieter mit Schlüssel. `ARCHIV_MODEL`
 überschreibt jedes Standardmodell.

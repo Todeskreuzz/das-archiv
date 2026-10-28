@@ -30,7 +30,7 @@ for (const entry of list) {
         { role: 'system', content: 'Antworte mit genau einem Wort.' },
         { role: 'user', content: 'Sag: bereit' },
       ],
-      { maxTokens: 12, timeout: 25000 },
+      { maxTokens: 200, timeout: 30000 },
     );
     const text = String(reply).replace(/\s+/g, ' ').trim().slice(0, 48);
     console.log(`  ● ${entry.label.padEnd(24)} OK  ${String(Date.now() - started).padStart(5)} ms  "${text}"`);

@@ -98,7 +98,7 @@ export function detectProvider(env, providers) {
 }
 
 export async function chat(provider, messages, options = {}) {
-  const { maxTokens = 260, temperature = 0.85, timeout = 25000 } = options;
+  const { maxTokens = 400, temperature = 0.85, timeout = 25000 } = options;
 
   if (!provider || !provider.ready) {
     throw new Error(`Anbieter ${provider?.id || '?'} ist nicht eingerichtet`);
