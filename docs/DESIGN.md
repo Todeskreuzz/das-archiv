@@ -215,14 +215,18 @@ Fugen und Verläufen.
 
 ```
 state.js
-├─ restore(entry)      → Punkte, Tagesfortschritt, Protokoll
+├─ restore(entry)      → als angesehen vermerken, Protokoll
 ├─ castVote(id, ±1)    → Quorum prüfen, ggf. aufnehmen
 ├─ submit(input)       → curator.judge(), Kandidat anlegen
 └─ liveEntries()       → Bestand + aufgenommene Kandidaten
 ```
 
 `logic.js` ist rein (kein DOM, kein Storage) und wird von `tests/logic.test.mjs` geprüft.
-`state.js` ist die einzige Stelle, die `localStorage` berührt (`das-archiv.v1`).
+`state.js` ist die einzige Stelle, die `localStorage` berührt (`das-archiv.v2`).
+
+**Es gibt keine Punkte, keine Ränge und keine Aufträge.** Ein Archiv belohnt nichts.
+Der einzige Zähler ist „angesehen": wie viele Stücke man wirklich geöffnet hat.
+Damit fällt auch jede Belohnungsschleife weg — was bleibt, ist Neugier.
 
 ### Das Quorum
 
@@ -325,7 +329,7 @@ im Gremium die Aufnahme entscheiden — der Kurator hat vorgearbeitet.
 ### Gespräch
 
 `src/ai/dialogue.js` erkennt Absichten per regulärem Ausdruck und antwortet aus dem echten
-Zustand: Bestand, Punkte, Rang, offene Kandidaten. Er kann:
+Zustand: Bestand, offene Kandidaten, angesehene Stücke. Er kann:
 
 - ein Exponat empfehlen und direkt öffnen (`action: 'open:<id>'`)
 - die Abstimmung öffnen (`action: 'ballot'`)
@@ -380,9 +384,8 @@ Das ist die Bildsprache eines Archivs — Beschriftung, nicht Auswahl.
 
 ## 14. Sprache
 
-Das Spiel duzt, aber es gendert nicht. Rangnamen sind Substantive, die für alle passen:
-
-`Aushilfe → Praktikum → Archivdienst → Leitung → Kuratorium`
+Das Spiel duzt, aber es gendert nicht. Es gibt keine Rangnamen mehr — nur Tätigkeiten:
+ansehen, abstimmen, nominieren, schreiben.
 
 Ebenso im Text: „finanziert von Freiwilligen", „man vertraut dir", „der Hinweis zur Einreichung".
 Kein `:in`, kein `*`, keine Partizipkonstruktionen.
@@ -395,7 +398,7 @@ Der Browser ist ein Client. `scripts/bridge.mjs` hält den Zustand und den Takt.
 ```
 Browser ──EventSource──▶ /brain/stream    (Gedanken, Ziele, Funde, Status)
         ──POST────────▶ /brain/message   (Frage, Antwort)
-        ──POST────────▶ /brain/state     (Bestand, Punkte, benutzte Funde)
+        ──POST────────▶ /brain/state     (Bestand, angesehen, benutzte Funde)
 ```
 
 | Betriebsart | Bedingung | Antwortquelle |
@@ -453,3 +456,44 @@ einen Text in der Stimme des Kurators.
 
 Die Klickflächen sind 0,6 m höher als das Objekt, damit man nicht pixelgenau zielen muss.
 Das Podest hat vier Randflächen statt einer großen — sonst würde es den Kurator verdecken.
+
+---
+
+## 18. Wände
+
+Sechs freie Flächen im Haus sind beschreibbar. Keine Rahmen, keine Regale — nur Wand.
+
+| Kennung | Ort | Größe |
+| --- | --- | --- |
+| `halle-west` | Westwand der Halle | 4,6 × 3,0 m |
+| `halle-ost` | Ostwand der Halle | 4,6 × 3,0 m |
+| `halle-nord-west` | Nordwand, links | 4,6 × 2,8 m |
+| `halle-nord-ost` | Nordwand, rechts | 4,6 × 2,8 m |
+| `tunnel-west` | Tunnel, Westseite | 5,0 × 2,4 m |
+| `vault-nord` | Verbindungsraum | 4,2 × 2,6 m |
+
+Jede Wand hat eine Leinwand mit 1024 × 512 Pixeln. Sie wird als transparente Textur auf eine
+Fläche vor der Wand gelegt (`engine/graffiti.js`).
+
+**Was gespeichert wird, sind keine Bilder, sondern Striche.** Ein Strich ist eine Liste
+normalisierter Punkte, eine Farbe und eine Stärke:
+
+```json
+{ "color": "#ffcf6a", "width": 5, "points": [[0.2,0.3],[0.4,0.35],[0.5,0.5]] }
+```
+
+Das hält die Daten klein, macht sie auflösungsunabhängig und erlaubt es, jede Wand neu zu
+zeichnen, wenn jemand anders etwas hinzufügt.
+
+**Notizen** sind Text mit einer Position auf der Leinwand. Sie werden als Papierkarte mit
+Stift, Faltung und sechs Zeilen Umbruch gezeichnet.
+
+**Ablauf**
+
+1. `GET /graffiti` liefert alle Wände beim Start.
+2. `E` an einer Wand öffnet die Tafel: Leinwand, vier Stifte, Stärke, Notizfeld.
+3. `POST /graffiti` schickt einen Strich oder eine Notiz.
+4. Die Brücke speichert in `website/data/graffiti.json` und schickt ein SSE-Ereignis
+   `{type:"graffiti"}` an alle anderen — sie sehen die Zeichnung sofort.
+
+Grenzen: 400 Striche und 60 Notizen pro Wand. Alte Einträge fallen zuerst heraus.

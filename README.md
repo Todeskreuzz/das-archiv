@@ -4,6 +4,8 @@ Ein begehbares Museum für deutsche Internetgeschichte — im Look eines alten R
 Du läufst durch die Räume, sicherst Exponate, stimmst über Neuaufnahmen ab und redest mit dem
 Kurator. Der ist keine Kulisse: er geht durch das Haus, denkt laut und sucht selbst nach Stücken.
 
+**Repository:** <https://github.com/Todeskreuzz/das-archiv>
+
 ![Halle](docs/screenshots/halle.png)
 
 ---
@@ -28,7 +30,8 @@ Kein Zeitlimit, keine Saison. Das hier ist ein Langzeitprojekt.
 | Vier Räume: Halle, Galerie, Spielhalle, Bibliothek | fertig |
 | 38 Exponate mit eigenen Kurator-Texten | fertig |
 | Zielscan mit Katalogzettel statt Rahmen | fertig |
-| Sichern mit Archivpunkten und Rängen | fertig |
+| Sichern ohne Punkte, ohne Ränge | fertig |
+| Notizen und Wandzeichnungen, für alle sichtbar | fertig |
 | Gremium: Abstimmung mit Quorum und Kurator-Votum | fertig |
 | Nominieren mit sofortigem Urteil (0–100) | fertig |
 | **Kurator läuft selbstständig durch das Haus** | fertig |
@@ -55,7 +58,7 @@ cd "Archive Game\website"
 node scripts/bridge.mjs
 ```
 
-Dann <http://localhost:4173> öffnen. Kein Build, kein `npm install`, keine Internetverbindung nötig.
+Dann <http://localhost:4780> öffnen. Kein Build, kein `npm install`, keine Internetverbindung nötig.
 
 **Live-Modus (echtes Sprachmodell):** Die Brücke spricht mit einer OpenAI-kompatiblen API, wenn ein
 Schlüssel gesetzt ist. Ohne Schlüssel denkt sie selbst — dieselbe Logik, nur ohne Netz.
@@ -104,7 +107,7 @@ Gremium vor. Wenn du in seiner Nähe bist, dreht er sich zu dir.
 ### Wie du mit ihm redest
 
 `T` öffnet ein Terminalfenster. Du kannst tippen, was du willst; er antwortet aus dem Zustand
-des Hauses: nach einem Exponat fragen, nach dem Bestand, nach deinem Rang, nach seiner Meinung.
+des Hauses: nach einem Exponat fragen, nach dem Bestand, nach dem Bestand, nach seiner Meinung.
 Er kann dich zu einem Stück führen, dir die Abstimmung öffnen oder sofort etwas suchen.
 
 Das ist **kein Sprachmodell**. Die Antworten entstehen aus Absichten und dem echten Spielstand —
@@ -143,8 +146,19 @@ woher er kommt.
 
 Kein Auswahlrahmen. Zielst du auf ein Exponat, laufen zwei dünne Messlinien an den Rändern,
 eine Scanzeile fährt darüber, und darunter hängt ein **Katalogzettel** mit gestanztem Loch:
-Titel, Jahr, Seltenheit und die Taste. Das ist die Sprache des Hauses, nicht die eines
-Shooter-Interfaces.
+Titel, Jahr, Seltenheit und die Taste.
+
+An sechs freien Wänden im Haus öffnet `E` stattdessen die **Wandtafel**: eine Leinwand zum
+Zeichnen, vier Stifte, ein Feld für Notizen. Was du speicherst, geht an die Brücke, wird auf
+der Wand als Textur gezeichnet und ist für alle sichtbar, die später hereinkommen.
+
+---
+
+## Keine Punkte
+
+Es gibt keinen Punktestand, keine Ränge, keine Aufträge. Ein Archiv belohnt nichts —
+es bewahrt auf. Der einzige Zähler ist „angesehen": wie viele der Stücke du dir wirklich
+angesehen hast. Mehr nicht.
 
 ---
 
@@ -189,7 +203,7 @@ Archive Game/
    │  │  ├─ visitor.js           ← Spielfigur für die dritte Person
    │  │  └─ player.js            ← First-Person-Steuerung, Sprung, Sprint
    │  └─ ui/
-   │     ├─ hud.js               ← Punkte, Zielscan, Zitate
+   │     ├─ hud.js               ← Bestand, Zielscan, Zitate
    │     ├─ menu.js
    │     ├─ chat.js              ← Gesprächsfenster
    │     └─ panels.js            ← Exponat, Gremium, Nominieren, Protokoll
@@ -214,14 +228,15 @@ Grundriss mit Koordinaten: [`docs/DESIGN.md`](docs/DESIGN.md).
 ## Spielschleife
 
 1. **Umsehen.** Jedes Exponat hat einen eigenen Text.
-2. **Sichern.** 15, 25 oder 40 Archivpunkte — je nach Seltenheit.
-3. **Aufsteigen.** Aushilfe → Praktikum → Archivdienst → Leitung → Kuratorium.
+2. **Sichern.** Ein Stück ansehen und als gesichert vermerken. Ohne Belohnung, ohne Punktestand.
+3. **Aufschreiben.** An sechs Wänden kannst du Notizen und Zeichnungen hinterlassen — für alle sichtbar.
 4. **Abstimmen.** Am GREMIUM-Terminal entscheidet das Quorum von fünf Netto-Stimmen.
    Die Stimme des Kurators zählt doppelt.
 5. **Nominieren.** Am EINREICHUNG-Terminal prüft der Kurator sofort: Note 0–100, Begründung, Urteil.
 6. **Zuhören.** Seine Funde landen automatisch beim Gremium — du entscheidest, ob sie bleiben.
 
-Gespeichert wird lokal unter `das-archiv.v1`.
+Gespeichert wird lokal unter `das-archiv.v2`. Notizen und Wandzeichnungen liegen auf dem
+Brückenserver in `website/data/graffiti.json` und sind für alle sichtbar.
 
 ---
 
