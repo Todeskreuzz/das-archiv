@@ -1011,78 +1011,145 @@ export function createWorld({ materials, posterTextures, graffiti, entries = [] 
 
   /* ------------------------------------------------------------- Depot */
 
-  const D = { x1: 13, x2: 27, z1: -34, z2: -22, h: 5.2 };
+  const D = { x1: 13, x2: 45, z1: -50, z2: -22, h: 9 };
 
   floorAt(root, materials.hallFloor, D.x1, D.x2, D.z1, D.z2);
-  wall(root, D.x1, D.z2, D.x2, D.z2, D.h, materials.wallDark);
-  wall(root, D.x2, D.z1, D.x2, D.z2, D.h, materials.wallDark);
+
   wall(root, D.x1, D.z1, D.x2, D.z1, D.h, materials.wallDark);
+  wall(root, D.x2, D.z1, D.x2, D.z2, D.h, materials.wallDark);
+  wall(root, D.x1, D.z2, D.x2, D.z2, D.h, materials.wallDark);
+  wall(root, D.x1, D.z1, D.x1, -34, D.h, materials.wallDark);
   wall(root, D.x1, -27, D.x1, D.z2, D.h, materials.wallDark);
+
   ceilingAt(root, materials.ceiling, D.x1, D.x2, D.z1, D.z2, D.h);
 
-  const depotSign = label('DEPOT', { width: 3.4, color: '#ffcf6a', letterSpacing: 18 });
-  depotSign.position.set(D.x1 + 0.16, 3.6, -30);
+  const depotSign = label('DEPOT', { width: 5, color: '#ffcf6a', letterSpacing: 22 });
+  depotSign.position.set(D.x1 + 0.2, 4.4, -30);
   depotSign.rotation.y = Math.PI / 2;
   root.add(depotSign);
 
-  for (const z of [-26, -30]) {
-    const depotLight = new THREE.PointLight(0xffe2c0, 130, 18, 1.5);
-    depotLight.position.set(20, 4.6, z);
-    root.add(depotLight);
+  const gate = label('TOR 1', { width: 1.6, color: '#6ee7d7', letterSpacing: 10 });
+  gate.position.set(D.x1 + 0.2, 2.8, -30);
+  gate.rotation.y = Math.PI / 2;
+  root.add(gate);
+
+  // Deckenlicht
+  for (const z of [-27, -35, -43]) {
+    for (const x of [22, 36]) {
+      root.add(box(2.4, 0.06, 0.2, materials.warm, x, D.h - 0.7, z));
+    }
+    const light = new THREE.PointLight(0xffe2c0, 240, 36, 1.4);
+    light.position.set(29, 7.4, z);
+    root.add(light);
   }
 
-  // Regalreihen
-  const rows = [16, 19.2, 22.4, 25.6];
-  const perLevel = 12;
-  const levels = 4;
-  const step = 0.94;
-  const startZ = -32.6;
-  const shelves = [];
-
-  for (const rowX of rows) {
-    const shelf = new THREE.Group();
-    shelf.position.set(rowX, 0, 0);
-    root.add(shelf);
-    shelves.push(shelf);
-
-    shelf.add(box(0.9, 0.06, 11.2, materials.woodDark, 0, 0.02, -27.5));
-    for (const z of [-33.1, -21.9]) {
-      shelf.add(box(0.16, 2.6, 0.16, materials.woodDark, 0, 1.3, z));
-    }
-    for (let level = 0; level < levels; level += 1) {
-      const y = 0.35 + level * 0.62;
-      shelf.add(box(0.86, 0.05, 11.1, materials.wood, 0, y, -27.5));
-    }
-
-    mark(shelf, [0.95, 2.6, 11.2], [0, 1.3, -27.5], 'regal', 'Depotregal');
+  // Bodenmarkierungen
+  for (const rowX of [16.5, 21, 25.5, 30, 34.5, 39]) {
+    const lane = plane(0.12, 24, new THREE.MeshBasicMaterial({
+      color: 0xd8a441,
+      transparent: true,
+      opacity: 0.3,
+    }), rowX + 1.7, 0.03, -36);
+    lane.rotation.x = -Math.PI / 2;
+    root.add(lane);
   }
 
-  // Kisten gleichmäßig auf alle Reihen verteilen
+  // Regale
+  const levels = [0.25, 2.35, 4.45, 6.55];
+  const positions = [];
+  for (let i = 0; i < 11; i += 1) positions.push(-47 + i * 2.2);
+
+  const pallets = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(1.0, 0.14, 1.0),
+    new THREE.MeshLambertMaterial({ color: 0x6b5636 }),
+    6 * levels.length * positions.length,
+  );
+  const cargo = new THREE.InstancedMesh(
+    new THREE.BoxGeometry(0.42, 0.3, 0.42),
+    new THREE.MeshLambertMaterial({ color: 0x8a7a5e }),
+    6 * levels.length * positions.length * 2,
+  );
+
+  const matrix = new THREE.Matrix4();
+  let pIndex = 0;
+  let cIndex = 0;
+
+  for (const rowX of [16.5, 21, 25.5, 30, 34.5, 39]) {
+    const rack = new THREE.Group();
+    rack.position.set(rowX, 0, 0);
+    root.add(rack);
+
+    for (const z of positions) {
+      rack.add(box(0.09, 7.8, 0.09, materials.orange, -0.55, 3.9, z));
+      rack.add(box(0.09, 7.8, 0.09, materials.orange, 0.55, 3.9, z));
+    }
+
+    for (let i = 0; i < positions.length - 1; i += 2) {
+      const mid = (positions[i] + positions[i + 1]) / 2;
+      rack.add(box(1.1, 0.04, 0.04, materials.orange, 0, 1.6, mid));
+      rack.add(box(1.1, 0.04, 0.04, materials.orange, 0, 4.0, mid));
+      rack.add(box(1.1, 0.04, 0.04, materials.orange, 0, 6.2, mid));
+    }
+
+    for (const y of levels) {
+      rack.add(box(0.07, 0.16, 24, materials.blue, -0.5, y, -36));
+      rack.add(box(0.07, 0.16, 24, materials.blue, 0.5, y, -36));
+    }
+
+    for (const y of levels) {
+      for (const z of positions) {
+        matrix.makeTranslation(rowX, y + 0.09, z);
+        pallets.setMatrixAt(pIndex, matrix);
+        pIndex += 1;
+
+        for (let k = 0; k < 2; k += 1) {
+          matrix.makeTranslation(
+            rowX + (k ? 0.16 : -0.18),
+            y + 0.31,
+            z + (k ? -0.16 : 0.18),
+          );
+          cargo.setMatrixAt(cIndex, matrix);
+          cIndex += 1;
+        }
+      }
+    }
+
+    mark(rack, [1.2, 7.8, 24], [0, 3.9, -36], 'regal', 'Lagerregal');
+  }
+
+  pallets.count = pIndex;
+  cargo.count = cIndex;
+  pallets.instanceMatrix.needsUpdate = true;
+  cargo.instanceMatrix.needsUpdate = true;
+  root.add(pallets);
+  root.add(cargo);
+
+  // Die Stücke selbst
+  const rowXList = [16.5, 21, 25.5, 30, 34.5, 39];
   entries.forEach((entry, index) => {
-    const rowIndex = index % rows.length;
-    const level = Math.floor(index / rows.length) % levels;
-    const slotIndex = Math.floor(index / (rows.length * levels)) % perLevel;
-    const shelf = shelves[rowIndex];
-    const y = 0.35 + level * 0.62 + 0.2;
-    const z = startZ + slotIndex * step;
+    const rowIndex = index % rowXList.length;
+    const level = Math.floor(index / rowXList.length) % levels.length;
+    const slot = Math.floor(index / (rowXList.length * levels.length)) % positions.length;
+    const rowX = rowXList[rowIndex];
+    const y = levels[level] + 0.3;
+    const z = positions[slot];
     const accent = entry.room === 'spielhalle' ? 0xff4d9d : entry.room === 'galerie' ? 0xd8a441 : 0x6ee7d7;
 
     const carton = new THREE.Mesh(
-      new THREE.BoxGeometry(0.5, 0.34, 0.62),
-      new THREE.MeshLambertMaterial({ color: 0x8a7a5e, emissive: accent, emissiveIntensity: 0.045 }),
+      new THREE.BoxGeometry(0.66, 0.5, 0.66),
+      new THREE.MeshLambertMaterial({ color: 0x9a8a6a, emissive: accent, emissiveIntensity: 0.06 }),
     );
-    carton.position.set(0, y, z);
-    carton.rotation.y = (index % 2 ? 1 : -1) * 0.02;
+    carton.position.set(rowX, y + 0.25, z);
     carton.userData.interact = { type: 'exhibit', id: entry.id, label: entry.title };
     interactables.push(carton);
-    shelf.add(carton);
+    root.add(carton);
 
-    shelf.add(box(0.51, 0.05, 0.63, new THREE.MeshBasicMaterial({ color: accent }), 0, y + 0.15, z));
+    root.add(box(0.68, 0.05, 0.68, new THREE.MeshBasicMaterial({ color: accent }), rowX, y + 0.53, z));
   });
 
-  // Katalogterminal am Eingang
+  // Katalogscreen am Tor
   const catalog = new THREE.Group();
-  catalog.position.set(14.4, 0, -30);
+  catalog.position.set(14.6, 0, -30);
   root.add(catalog);
   catalog.add(box(1.1, 1.0, 0.6, materials.ink, 0, 0.5, 0));
   catalog.add(box(1.16, 0.06, 0.66, materials.brass, 0, 1.03, 0));
@@ -1096,11 +1163,11 @@ export function createWorld({ materials, posterTextures, graffiti, entries = [] 
     new THREE.MeshBasicMaterial({ map: consoleTexture('KATALOG', 'alles im Haus', '#ffcf6a'), toneMapped: false }),
   );
   catalogScreen.position.z = 0.04;
-  catalogScreen.userData.interact = { type: 'catalog', label: 'Katalog öffnen' };
+  catalogScreen.userData.interact = { type: 'catalog', label: 'Katalog oeffnen' };
   interactables.push(catalogScreen);
   catalogHead.add(catalogScreen);
-  addCollider(13.85, -30.35, 14.95, -29.65);
-  shadowBlob(root, 14.4, -30, 1.2, 0.35);
+  addCollider(14.05, -30.35, 15.15, -29.65);
+  shadowBlob(root, 14.6, -30, 1.2, 0.35);
 
   /* ------------------------------------------------------------- Animation */
 

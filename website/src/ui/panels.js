@@ -364,6 +364,87 @@ export function connectionPanel(status = {}) {
   });
 }
 
+/* --------------------------------------------------------------- Gedanken */
+
+export function thoughtsPanel(items = []) {
+  const body = `
+    <p class="ballot__lead">
+      Diese Sätze hat der Kurator selbst notiert — beim Gehen, beim Suchen, beim Prüfen.
+      Sie sind nicht für dich geschrieben. Genau deshalb sind sie brauchbar: Du kannst
+      die Welt danach gestalten.
+    </p>
+    ${
+      items.length
+        ? `<div class="thoughts">${items
+            .map(
+              (item) => `
+          <article class="thought thought--${esc(item.kind || 'gedanke')}">
+            <span class="thought__time">${new Date(item.at).toLocaleString('de-DE', {
+              day: '2-digit',
+              month: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}</span>
+            <p>${esc(item.text)}</p>
+          </article>`,
+            )
+            .join('')}</div>`
+        : '<p class="ballot__lead">Noch kein Gedanke. Er denkt alle halbe Minute — gib ihm einen Moment.</p>'
+    }`;
+
+  return sheet({
+    kicker: 'Gedankenbuch',
+    title: 'Was der Kurator denkt',
+    body,
+    foot: '<button class="btn-line" data-close>Zurück · ESC</button>',
+  });
+}
+
+/* --------------------------------------------------------------- Ausstellung */
+
+export function publishPanel(result = null) {
+  if (result) {
+    return sheet({
+      kicker: 'Ausstellung',
+      title: result.title || 'Veröffentlicht',
+      body: `
+        <p class="ballot__lead">
+          ${result.pushed ? 'Der Kurator hat die Seite gebaut, committet und gepusht.' : 'Die Seite liegt lokal bereit; der Push hat nicht geklappt.'}
+        </p>
+        <p><a href="${esc(result.url)}" target="_blank" rel="noopener">${esc(result.url)}</a></p>
+        ${result.error ? `<p class="form__note">Fehler beim Push: ${esc(result.error)}</p>` : ''}
+        <p class="form__note">
+          GitHub Pages braucht einen Moment. Wenn die Seite 404 zeigt, ist Pages noch nicht
+          auf <code>main /docs</code> gestellt.
+        </p>`,
+      foot: '<button class="btn-line" data-close>Zurück · ESC</button>',
+    });
+  }
+
+  return sheet({
+    kicker: 'Ausstellung',
+    title: 'Öffentlich ausstellen',
+    body: `
+      <p class="ballot__lead">
+        Der Kurator wählt Stücke aus dem Bestand, schreibt einen Titel und eine Einleitung
+        und baut daraus eine statische Seite. Auf Wunsch committet und pusht er sie — dann
+        ist sie über GitHub Pages für jeden erreichbar.
+      </p>
+      <div class="rows">
+        <div><span class="row__label">Ort</span><span class="row__value">docs/ausstellung/</span></div>
+        <div><span class="row__label">Umfang</span><span class="row__value">bis 8 Stücke</span></div>
+        <div><span class="row__label">Veröffentlichung</span><span class="row__value">git commit + push</span></div>
+      </div>
+      <p class="form__note" style="margin-top:14px">
+        Automatisch alle vier Stunden nur, wenn <code>ARCHIV_PUBLISH=1</code> gesetzt ist.
+        Sonst entscheidest du mit dem Knopf unten.
+      </p>`,
+    foot: `
+      <button class="btn-solid" data-publish>Jetzt ausstellen</button>
+      <button class="btn-line" data-close>Zurück · ESC</button>`,
+  });
+}
+
 export function aboutPanel() {  const body = `
     <p class="ballot__lead">
       Das Archiv sammelt deutsche Internetgeschichte: Grafiken, Browserspiele, Portale, Weblogs,

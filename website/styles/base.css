@@ -626,6 +626,27 @@ img, svg { display: block; max-width: 100%; }
   color: var(--ink-faint);
 }
 
+/* --- Gedankenbuch ------------------------------------------------------- */
+
+.thoughts { display: grid; }
+
+.thought {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line-faint);
+}
+.thought__time {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  padding-top: 3px;
+}
+.thought p { margin: 0; font-size: 12px; line-height: 1.6; }
+.thought--fund p { color: var(--amber); }
+
 /* --- Rang --------------------------------------------------------------- */
 
 .rankbar {

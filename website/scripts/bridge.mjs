@@ -8,6 +8,8 @@ import { RESEARCH_POOL } from '../src/ai/research.js';
 import { createScout } from './scout.mjs';
 import { loadEnv, loadProviders, listProviders, detectProvider, chat } from './providers.mjs';
 import { loadMemory, saveMemory, remember, recent, transcript, countTurns } from './memory.mjs';
+import { loadThoughts, addThought, saveThoughts, recentThoughts, thoughtsForPrompt } from './thoughts.mjs';
+import { publishExhibition } from './publisher.mjs';
 
 /**
  * Die Brücke.
@@ -30,6 +32,9 @@ const PROVIDERS = loadProviders();
 const provider = detectProvider(ENV, PROVIDERS);
 const mode = provider ? 'live' : 'local';
 const memory = loadMemory();
+const thoughts = loadThoughts();
+let archive = [];
+let lastPublish = 0;
 
 /* ------------------------------------------------------------------ Zustand */
 
@@ -86,6 +91,26 @@ function broadcast(event) {
   }
 }
 
+/** Gedanken gehen ins Buch und an alle Besucher. */
+function journal(text, kind = 'gedanke') {
+  let clean = String(text || '').trim();
+  if (!clean) return;
+  // Falls doch einmal rohes JSON durchrutscht: nur den Gedanken behalten.
+  if (clean.startsWith('{')) {
+    const match = clean.match(/"thought"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+    if (!match) return;
+    try {
+      clean = JSON.parse(`"${match[1]}"`).trim();
+    } catch {
+      return;
+    }
+  }
+  if (!clean) return;
+  addThought(thoughts, clean, kind);
+  saveThoughts(thoughts);
+  broadcast({ type: 'thought', text: clean, kind });
+}
+
 /* ------------------------------------------------------------------ Modell */
 
 const SYSTEM = `Du bist der KURATOR im "Archiv", einem Museum für deutsche Internetgeschichte.
@@ -115,14 +140,31 @@ function sessionLine() {
 
 async function askModel(messages) {
   const raw = await chat(provider, messages);
-  const text = String(raw || '').trim();
+  const text = String(raw || '').replace(/```json/gi, '').replace(/```/g, '').trim();
+
   const match = text.match(/\{[\s\S]*\}/);
-  if (!match) return { say: text };
-  try {
-    return JSON.parse(match[0]);
-  } catch {
-    return { say: text };
+  if (match) {
+    try {
+      return JSON.parse(match[0]);
+    } catch {
+      /* Manche Modelle schreiben echte Zeilenumbrueche in Strings. */
+    }
   }
+
+  const thought = text.match(/"thought"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  const say = text.match(/"say"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+  const go = text.match(/"go"\s*:\s*"([^"]*)"/);
+
+  if (thought || say) {
+    return {
+      thought: thought ? JSON.parse(`"${thought[1]}"`) : '',
+      say: say ? JSON.parse(`"${say[1]}"`) : '',
+      go: go ? go[1] : null,
+    };
+  }
+
+  if (text.startsWith('{')) return { say: '' };
+  return { say: text };
 }
 
 /* ------------------------------------------------------------------ Denken */
@@ -152,10 +194,16 @@ async function think() {
     try {
       const result = await askModel([
         { role: 'system', content: SYSTEM },
-        { role: 'user', content: `${sessionLine()}\n\nDenke laut, in einem Satz. Keine Antwort an jemanden, nur ein Gedanke.` },
+        {
+          role: 'user',
+          content:
+            `${sessionLine()}\n\n` +
+            (thoughtsForPrompt(thoughts, 5) ? `Deine letzten Gedanken:\n${thoughtsForPrompt(thoughts, 5)}\n\n` : '') +
+            'Denke laut, in einem Satz. Keine Antwort an jemanden, nur ein Gedanke.',
+        },
       ]);
       const thought = String(result.thought || result.say || '').trim();
-      if (thought) broadcast({ type: 'thought', text: thought });
+      if (thought) journal(thought);
       if (result.go) broadcast({ type: 'go', target: result.go });
       return;
     } catch (error) {
@@ -163,7 +211,7 @@ async function think() {
     }
   }
 
-  broadcast({ type: 'thought', text: pickThought() });
+  journal(pickThought());
   if (Math.random() < 0.35) {
     broadcast({ type: 'go', target: LOCAL_MOVES[Math.floor(Math.random() * LOCAL_MOVES.length)] });
   }
@@ -202,6 +250,7 @@ const scout = createScout({
       }
     }
     broadcast({ type: 'find', entry });
+    journal(`Ich habe ${entry.title} gefunden. Es liegt jetzt beim Gremium.`, 'fund');
     console.log(`  Fund: ${entry.title} — ${entry.url}`);
   },
 });
@@ -361,6 +410,63 @@ const server = createServer(async (req, res) => {
     return;
   }
 
+  if (path === '/brain/thoughts') {
+    json(res, 200, { items: recentThoughts(thoughts, 100) });
+    return;
+  }
+
+  if (path === '/brain/archive' && req.method === 'POST') {
+    const body = await readBody(req);
+    if (Array.isArray(body.entries)) archive = body.entries;
+    json(res, 200, { ok: true, count: archive.length });
+    return;
+  }
+
+  if (path === '/brain/publish' && req.method === 'POST') {
+    const body = await readBody(req);
+    const pool = Array.isArray(body.entries) && body.entries.length ? body.entries : archive;
+    if (pool.length < 3) {
+      json(res, 400, { ok: false, error: 'Zu wenige Stuecke im Bestand' });
+      return;
+    }
+
+    const chosen = [...pool].sort(() => Math.random() - 0.5).slice(0, Math.min(8, pool.length));
+    let title = 'Ausstellung';
+    let intro =
+      'Sechs Stuecke aus dem Bestand, ausgewaehlt vom Kurator. Jedes davon war einmal wichtig, ' +
+      'und fast keines davon haette ueberlebt.';
+
+    if (mode === 'live') {
+      try {
+        const result = await askModel([
+          { role: 'system', content: SYSTEM },
+          {
+            role: 'user',
+            content:
+              'Du stellst eine kleine Ausstellung zusammen. Erfinde einen knappen Titel und eine ' +
+              'Einleitung von zwei Saetzen. Antworte als JSON: {"title":"...","intro":"..."}.\n\n' +
+              chosen.map((entry) => `- ${entry.title} (${entry.year || '?'}): ${entry.text}`).join('\n'),
+          },
+        ]);
+        if (result.title) title = String(result.title).slice(0, 70);
+        if (result.intro) intro = String(result.intro).slice(0, 400);
+      } catch {
+        /* Ohne Modell bleibt der Standardtext. */
+      }
+    }
+
+    try {
+      const result = publishExhibition({ title, intro, entries: chosen, push: body.push !== false });
+      lastPublish = Date.now();
+      journal(`Ich habe eine Ausstellung veroeffentlicht: ${title}.`, 'ausstellung');
+      json(res, 200, { ok: true, ...result, title });
+      return;
+    } catch (error) {
+      json(res, 500, { ok: false, error: error.message });
+      return;
+    }
+  }
+
   if (path === '/brain/scan' && req.method === 'POST') {
     const entry = await scout.scan();
     json(res, 200, { found: Boolean(entry), entry });
@@ -475,6 +581,16 @@ setInterval(() => {
         if (!found) maybeFind();
       })
       .catch(() => maybeFind());
+  }
+
+  // Eigene Ausstellung, wenn ausdruecklich erlaubt.
+  if (ENV.ARCHIV_PUBLISH === '1' && archive.length >= 6 && now - lastPublish > 4 * 3600 * 1000) {
+    lastPublish = now;
+    fetch(`http://127.0.0.1:${port}/brain/publish`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ entries: archive, push: true }),
+    }).catch(() => {});
   }
 }, 5000);
 

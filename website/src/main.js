@@ -26,6 +26,8 @@ import {
   anonPanel,
   accountPanel,
   connectionPanel,
+  thoughtsPanel,
+  publishPanel,
 } from './ui/panels.js';
 import {
   state,
@@ -158,6 +160,55 @@ function chatContext() {
   };
 }
 
+let archiveSig = '';
+
+function minimalEntries() {
+  return liveEntries().map((entry) => ({
+    id: entry.id,
+    title: entry.title,
+    year: entry.year,
+    kind: entry.kind,
+    room: entry.room,
+    text: entry.text,
+    accent: entry.accent,
+    motif: entry.motif,
+    rarity: entry.rarity,
+    host: entry.host,
+    url: entry.url,
+  }));
+}
+
+function syncArchive() {
+  const entries = minimalEntries();
+  const sig = entries.map((entry) => entry.id).join(',');
+  if (sig === archiveSig) return;
+  archiveSig = sig;
+  fetch('/brain/archive', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ entries }),
+  }).catch(() => {});
+}
+
+async function publishNow() {
+  try {
+    const response = await fetch('/brain/publish', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ entries: minimalEntries(), push: true }),
+    });
+    const result = await response.json();
+    if (!result.ok) {
+      hud.toast(result.error || 'Nicht veröffentlicht');
+      return;
+    }
+    hud.toast('Ausstellung veröffentlicht');
+    openPanel(publishPanel(result));
+  } catch {
+    hud.toast('Brücke nicht erreichbar');
+  }
+}
+
 function updateHud() {
   const entries = liveEntries();
   hud.setStats({
@@ -167,6 +218,7 @@ function updateHud() {
     marks: graffiti?.strokeCount?.() || 0,
   });
   syncLink();
+  syncArchive();
 }
 
 function syncLink() {
@@ -213,6 +265,7 @@ if (!params.has('nolink')) {
     if (event.type === 'thought') {
       hud.say(event.text, 'DENKT');
       agent.setRemote(true);
+      globalThis.__archivThoughts = (globalThis.__archivThoughts || 0) + 1;
       return;
     }
     if (event.type === 'go') {
@@ -441,6 +494,18 @@ function placeNote() {
   openWall(id, { id, title: 'Notiz', room: 'Haus' });
 }
 
+async function openThoughts() {
+  let items = [];
+  try {
+    const response = await fetch('/brain/thoughts', { cache: 'no-store' });
+    if (response.ok) items = (await response.json()).items || [];
+  } catch {
+    items = [];
+  }
+  globalThis.__archivThoughts = items.length;
+  openPanel(thoughtsPanel(items));
+}
+
 async function openConnection() {
   let status = { mode: 'offline' };
   try {
@@ -462,6 +527,8 @@ menu.onAction((action) => {
   if (action === 'anon') return openPanel(anonPanel());
   if (action === 'account') return openPanel(accountPanel());
   if (action === 'verbindung') return openConnection();
+  if (action === 'gedanken') return openThoughts();
+  if (action === 'ausstellung') return openPanel(publishPanel());
   return undefined;
 });
 
@@ -560,8 +627,13 @@ function interact() {
 /* ---------------------------------------------------------------- Ereignisse */
 
 document.addEventListener('click', (event) => {
-  const target = event.target.closest('[data-close], [data-restore], [data-vote], [data-open-ballot], [data-open-submit], [data-entry], [data-reset], [data-open-chat]');
+  const target = event.target.closest('[data-close], [data-restore], [data-vote], [data-open-ballot], [data-open-submit], [data-entry], [data-reset], [data-open-chat], [data-publish]');
   if (!target) return;
+
+  if (target.matches('[data-publish]')) {
+    publishNow();
+    return;
+  }
 
   if (target.matches('[data-close]')) {
     hud.closePanel();

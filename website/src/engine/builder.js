@@ -47,6 +47,8 @@ export function createMaterials() {
     ceiling: lambert({ color: 0x0a0e18 }),
     brass: lambert({ color: 0xd8a441, emissive: 0x2a1d06, emissiveIntensity: 1 }),
     brassDark: lambert({ color: 0x8a6a2a, emissive: 0x120c02, emissiveIntensity: 1 }),
+    orange: lambert({ color: 0xb5651d, emissive: 0x1a0a02, emissiveIntensity: 1 }),
+    blue: lambert({ color: 0x2f5fa8, emissive: 0x050a16, emissiveIntensity: 1 }),
     wood: lambert({ color: 0x3a2718 }),
     woodDark: lambert({ color: 0x1e140b }),
     paper: lambert({ color: 0xf1e8d4 }),

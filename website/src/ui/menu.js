@@ -10,6 +10,16 @@ const ITEMS = [
   { id: 'anon', label: 'Anonymität', hint: () => 'deine Spuren' },
   { id: 'account', label: 'Dein Konto', hint: () => 'lokal, ohne Passwort' },
   {
+    id: 'ausstellung',
+    label: 'Ausstellung',
+    hint: () => 'veröffentlichen',
+  },
+  {
+    id: 'gedanken',
+    label: 'Gedanken',
+    hint: () => `${globalThis.__archivThoughts ?? '—'} Einträge`,
+  },
+  {
     id: 'verbindung',
     label: 'Verbindung',
     hint: () => (globalThis.__archivLink === 'live' ? 'live' : globalThis.__archivLink === 'local' ? 'lokal' : 'offline'),
